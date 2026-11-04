@@ -737,7 +737,7 @@ class WindowsCryptoFfi {
       throw ArgumentError('length 必须为正整数，当前值: $length');
     }
 
-    final pBuffer = calloc<Uint8>(length);
+    final pBuffer = _zeroOnFree<Uint8>(length);
     try {
       final status = _bcryptGenRandom(
         pBuffer,
@@ -748,7 +748,7 @@ class WindowsCryptoFfi {
 
       return Uint8List.fromList(pBuffer.asTypedList(length));
     } finally {
-      calloc.free(pBuffer);
+      _zeroOnFree.free(pBuffer);
     }
   }
 
@@ -785,7 +785,7 @@ class WindowsCryptoFfi {
       throw ArgumentError('AES-256 密钥长度必须为 32 字节，当前: ${key.length} 字节');
     }
 
-    final arena = Arena();
+    final arena = Arena(_zeroOnFree);
     try {
       // 1. 打开 AES 算法提供者
       final phAlgorithm = arena<Pointer<Void>>();
@@ -968,7 +968,7 @@ class WindowsCryptoFfi {
       );
     }
 
-    final arena = Arena();
+    final arena = Arena(_zeroOnFree);
     try {
       // 1. 打开 AES 算法提供者
       final phAlgorithm = arena<Pointer<Void>>();
@@ -1146,7 +1146,7 @@ class WindowsCryptoFfi {
       throw ArgumentError('密钥长度必须为正整数，当前值: $keyLength');
     }
 
-    final arena = Arena();
+    final arena = Arena(_zeroOnFree);
     try {
       // 1. 打开 HMAC-SHA256 算法提供者（作为 PBKDF2 的 PRF）
       // 必须使用 BCRYPT_ALG_HANDLE_HMAC_FLAG 标志，才能获得 HMAC 句柄
@@ -1245,4 +1245,38 @@ class WindowsCryptoException implements Exception {
 
   @override
   String toString() => 'WindowsCryptoException: $message';
+}
+
+/// 释放前清零的分配器（包装 [calloc]）
+///
+/// 本文件分配的原生内存会存放密钥副本、UTF-8 暗号、PBKDF2 派生密钥、
+/// 随机密钥字节和解密后的明文。直接 free 会把这些数据原样留在原生堆中，
+/// 因此释放前先按分配时记录的大小写零。用作 [Arena] 的底层分配器后，
+/// arena.releaseAll() 会对每块内存执行清零再释放。
+final _zeroOnFree = ZeroOnFreeAllocator();
+
+/// 释放前把内存写零的 [Allocator]，默认以 [calloc] 作为底层分配器
+///
+/// 构造参数 backing 仅供测试注入，用于在真正释放前检查内存内容。
+class ZeroOnFreeAllocator implements Allocator {
+  ZeroOnFreeAllocator([this._backing = calloc]);
+
+  final Allocator _backing;
+  final Map<int, int> _sizes = {};
+
+  @override
+  Pointer<T> allocate<T extends NativeType>(int byteCount, {int? alignment}) {
+    final pointer = _backing.allocate<T>(byteCount, alignment: alignment);
+    _sizes[pointer.address] = byteCount;
+    return pointer;
+  }
+
+  @override
+  void free(Pointer<NativeType> pointer) {
+    final size = _sizes.remove(pointer.address);
+    if (size != null && size > 0) {
+      pointer.cast<Uint8>().asTypedList(size).fillRange(0, size, 0);
+    }
+    _backing.free(pointer);
+  }
 }
