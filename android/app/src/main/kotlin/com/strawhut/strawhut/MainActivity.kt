@@ -1,5 +1,6 @@
 package com.strawhut.strawhut
 
+import android.content.ContentResolver
 import android.content.ContentValues
 import android.net.Uri
 import android.os.Build
@@ -10,6 +11,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.strawhut.strawhut/file_saver"
@@ -87,23 +89,10 @@ class MainActivity : FlutterActivity() {
             }
             val resolver = contentResolver
             val uri = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
-            if (uri != null) {
-                try {
-                    resolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.write(bytes)
-                    }
-                    contentValues.clear()
-                    contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
-                    resolver.update(uri, contentValues, null, null)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    return null
-                }
-            }
-            return uri
+            return writeToMediaStore(resolver, uri, bytes)
         } else {
             val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val file = File(downloadsDir, fileName)
+            val file = File(downloadsDir, File(fileName).name)
             try {
                 FileOutputStream(file).use { it.write(bytes) }
                 return Uri.fromFile(file)
@@ -124,23 +113,10 @@ class MainActivity : FlutterActivity() {
             }
             val resolver = contentResolver
             val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-            if (uri != null) {
-                try {
-                    resolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.write(bytes)
-                    }
-                    contentValues.clear()
-                    contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
-                    resolver.update(uri, contentValues, null, null)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    return null
-                }
-            }
-            return uri
+            return writeToMediaStore(resolver, uri, bytes)
         } else {
             val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val file = File(picturesDir, fileName)
+            val file = File(picturesDir, File(fileName).name)
             try {
                 FileOutputStream(file).use { it.write(bytes) }
                 return Uri.fromFile(file)
@@ -181,20 +157,7 @@ class MainActivity : FlutterActivity() {
             }
             val resolver = contentResolver
             val uri = resolver.insert(contentUri, contentValues)
-            if (uri != null) {
-                try {
-                    resolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.write(bytes)
-                    }
-                    contentValues.clear()
-                    contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
-                    resolver.update(uri, contentValues, null, null)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    return null
-                }
-            }
-            return uri
+            return writeToMediaStore(resolver, uri, bytes)
         } else {
             val dir = when {
                 mimeType.startsWith("image/") -> Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
@@ -202,7 +165,7 @@ class MainActivity : FlutterActivity() {
                 mimeType.startsWith("audio/") -> Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
                 else -> Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             }
-            val file = File(dir, fileName)
+            val file = File(dir, File(fileName).name)
             try {
                 FileOutputStream(file).use { it.write(bytes) }
                 return Uri.fromFile(file)
@@ -210,6 +173,36 @@ class MainActivity : FlutterActivity() {
                 e.printStackTrace()
                 return null
             }
+        }
+    }
+
+    /**
+     * 向 MediaStore 中已插入（IS_PENDING=1）的条目写入数据并发布。
+     *
+     * - insert 失败（uri 为 null）时返回 null。
+     * - openOutputStream 返回 null 时视为失败（此前会对空文件报告成功）。
+     * - 任一步骤失败都会删除该条目，避免留下空的 pending 记录；
+     *   否则 Dart 端随后执行回退保存，一次保存会产生两份文件。
+     */
+    private fun writeToMediaStore(resolver: ContentResolver, uri: Uri?, bytes: ByteArray): Uri? {
+        if (uri == null) return null
+        return try {
+            val stream = resolver.openOutputStream(uri)
+                ?: throw IOException("openOutputStream returned null for $uri")
+            stream.use { it.write(bytes) }
+            val published = ContentValues().apply {
+                put(MediaStore.MediaColumns.IS_PENDING, 0)
+            }
+            resolver.update(uri, published, null, null)
+            uri
+        } catch (e: Exception) {
+            e.printStackTrace()
+            try {
+                resolver.delete(uri, null, null)
+            } catch (ignored: Exception) {
+                // 清理失败不影响返回结果
+            }
+            null
         }
     }
 }
