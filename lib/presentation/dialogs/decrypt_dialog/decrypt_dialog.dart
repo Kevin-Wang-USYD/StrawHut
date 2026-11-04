@@ -346,6 +346,8 @@ class _DecryptDialogState extends ConsumerState<DecryptDialog> {
         strawFileForHash: strawFileForSink,
         hmacKey: hmacKey,
       );
+      // HMac.init 已将密钥复制进内部 pad，创建后即可清零（与内存解密路径一致）
+      if (hmacKey != null) MemoryUtils.wipeBytes(hmacKey);
     }
 
     if (useStream) {
@@ -1238,6 +1240,8 @@ class _DecryptDialogMobileState extends ConsumerState<_DecryptDialogMobile> {
         strawFileForHash: strawFileForSink,
         hmacKey: hmacKey,
       );
+      // HMac.init 已将密钥复制进内部 pad，创建后即可清零（与内存解密路径一致）
+      if (hmacKey != null) MemoryUtils.wipeBytes(hmacKey);
     }
 
     if (useStream) {

@@ -49,9 +49,12 @@ final migrationCheckProvider = Provider<Future<bool> Function(String)>((ref) {
 final streamedTextPayloadLoaderProvider =
     Provider<Future<Uint8List> Function(String)>((ref) {
   return (filePath) async {
-    final payloadBytes = await File(filePath).readAsBytes();
-    await TempFileManager.deleteTempFile(filePath);
-    return payloadBytes;
+    // 无论读取成功与否都删除临时明文文件（读取失败时曾残留到下次启动）
+    try {
+      return await File(filePath).readAsBytes();
+    } finally {
+      await TempFileManager.deleteTempFile(filePath);
+    }
   };
 });
 
@@ -515,14 +518,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       }
     }
 
-    if (mounted) {
-      setState(() {
-        _decryptResult = displayResult;
-        _contentType = contentType;
-        _tempFilePath = tempFilePath;
-        _status = ReaderStatus.decrypted;
-      });
+    if (!mounted) {
+      // 页面已关闭（例如解密完成前用户离开）：临时明文文件不会再被记录到
+      // _tempFilePath，dispose 也就清理不到，必须在这里删除
+      if (tempFilePath != null) {
+        await TempFileManager.deleteTempFile(tempFilePath);
+      }
+      return;
     }
+    setState(() {
+      _decryptResult = displayResult;
+      _contentType = contentType;
+      _tempFilePath = tempFilePath;
+      _status = ReaderStatus.decrypted;
+    });
   }
 
   /// 弹出解密对话框

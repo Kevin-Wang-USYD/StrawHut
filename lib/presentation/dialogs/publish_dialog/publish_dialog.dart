@@ -774,6 +774,8 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
         hmacKey: hmacKey,
       );
       MemoryUtils.wipeBytes(hmacKey);
+      // 加密与 HMAC 派生之后不再需要原始密钥字节（展示/导出使用 keyBase64）
+      MemoryUtils.wipeBytes(keyBytes);
 
       final binaryResult = fileIOService.buildBinaryFileBytesWithIntegrity(
         strawFileForHash: strawFileForHash,
@@ -3338,6 +3340,8 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
         hmacKey,
       );
       MemoryUtils.wipeBytes(hmacKey);
+      // 加密与 HMAC 派生之后不再需要原始密钥字节（展示/导出使用 keyBase64）
+      MemoryUtils.wipeBytes(keyBytes);
 
       final strawFile = StrawFile(
         formatVersion: const FormatVersion(2, 1, 0),
