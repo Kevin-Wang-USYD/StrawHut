@@ -147,6 +147,22 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   /// 进入后台时清除了解密内容，回到前台时需要重新弹出解密对话框
   bool _redecryptOnResume = false;
 
+  /// 已解码文本的缓存（按解密结果对象缓存，避免每次 build 重新解码全文）
+  DecryptResult? _decodedTextSource;
+  String? _decodedTextCache;
+
+  /// 将解密载荷解码为文本
+  ///
+  /// 载荷来自用户文件，可能不是合法 UTF-8；使用 allowMalformed 以替换字符
+  /// 显示非法字节，而不是在 build 中抛出 FormatException 显示错误页。
+  String _decodedText(DecryptResult result) {
+    if (!identical(_decodedTextSource, result) || _decodedTextCache == null) {
+      _decodedTextSource = result;
+      _decodedTextCache = utf8.decode(result.payloadBytes, allowMalformed: true);
+    }
+    return _decodedTextCache!;
+  }
+
   /// 当前 .straw 文件路径，用于流式解密大文件
   String? _filePath;
 
@@ -195,6 +211,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (!mounted || _status != ReaderStatus.decrypted) return;
     setState(() {
       _decryptResult = null;
+      _decodedTextSource = null;
+      _decodedTextCache = null;
       _contentType = null;
       _status = ReaderStatus.metaOnly;
       _hasShownDecryptDialog = false;
@@ -532,6 +550,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     );
   }
 
+  /// 重新打开解密对话框（未解密状态下的"解密"按钮）
+  void _reopenDecryptDialog() {
+    _hasShownDecryptDialog = false;
+    _showDecryptDialog();
+  }
+
   /// 处理返回按钮
   ///
   /// 清理解密状态并返回到首页。
@@ -551,6 +575,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     setState(() {
       _status = ReaderStatus.loading;
       _decryptResult = null;
+      _decodedTextSource = null;
+      _decodedTextCache = null;
       _contentType = null;
       _tempFilePath = null;
       _strawFile = null;
@@ -755,6 +781,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             ),
           ),
           const SizedBox(height: 16),
+          // 关闭/取消解密对话框后仍可重新打开，避免用户只能退出页面重进
+          Center(
+            child: NeumorphicButton(
+              label: '解密',
+              style: NeumorphicButtonStyle.primary,
+              onPressed: _reopenDecryptDialog,
+            ),
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -830,17 +865,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     switch (contentType) {
       case ContentType.richText:
         // 富文本：从 payloadBytes 解析 Delta JSON
-        final deltaJson = utf8.decode(result.payloadBytes);
+        final deltaJson = _decodedText(result);
         contentWidget = QuillViewer(deltaJson: deltaJson);
 
       case ContentType.text:
         // 纯文本
-        final textContent = utf8.decode(result.payloadBytes);
+        final textContent = _decodedText(result);
         contentWidget = TextViewer(text: textContent);
 
       case ContentType.markdown:
         // Markdown
-        final markdownContent = utf8.decode(result.payloadBytes);
+        final markdownContent = _decodedText(result);
         contentWidget = TextViewer(text: markdownContent, isMarkdown: true);
 
       case ContentType.image:
@@ -949,8 +984,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onPressed: () {
                         _cleanupTempFile();
                         setState(() {
+                          // 回到未解密状态：若用户在对话框中取消，页面显示
+                          // 卡片信息与"解密"按钮，而不是"解密内容为空"
+                          _status = ReaderStatus.metaOnly;
                           _hasShownDecryptDialog = false;
                           _decryptResult = null;
+                          _decodedTextSource = null;
+                          _decodedTextCache = null;
                           _contentType = null;
                           _tempFilePath = null;
                         });

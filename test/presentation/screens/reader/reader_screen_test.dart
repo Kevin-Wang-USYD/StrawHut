@@ -518,6 +518,29 @@ void main() {
 
       expect(find.byType(AlertDialog), findsNothing);
     });
+
+    // 回归测试：取消解密对话框后，未解密页面曾没有任何入口重新打开对话框，
+    // 用户只能退出页面再进来。
+    testWidgets('取消后可通过页面上的"解密"按钮重新打开对话框', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        createRouterTestableApp(container: container),
+      );
+
+      navigateToReader(tester, '/test/straw.straw');
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsOneWidget);
+
+      await tester.tap(find.text('取消'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(find.byType(MetaPreview), findsOneWidget);
+
+      final reopen = find.widgetWithText(NeumorphicButton, '解密');
+      expect(reopen, findsOneWidget);
+      await tester.tap(reopen);
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsOneWidget);
+    });
   });
 
   // ========================================================================
@@ -831,6 +854,101 @@ void main() {
       expect(find.textContaining('读取解密内容失败'), findsNothing);
       expect(File(outputPath!).existsSync(), isFalse);
       expect(find.text('streamed plain text'), findsOneWidget);
+      PathProviderPlatform.instance = previousPathProvider;
+    });
+
+    // 回归测试：载荷不是合法 UTF-8 时，build 中的 utf8.decode 曾抛出
+    // FormatException，整个内容区变成 Flutter 错误页。
+    testWidgets('invalid UTF-8 text is shown with replacement chars, not an error', (
+      WidgetTester tester,
+    ) async {
+      String? outputPath;
+      final previousPathProvider = PathProviderPlatform.instance;
+
+      when(
+        () => mockCryptoService.decryptStream(
+          strawFilePath: any(named: 'strawFilePath'),
+          key: any(named: 'key'),
+          targetPath: any(named: 'targetPath'),
+          chunkSize: any(named: 'chunkSize'),
+          originalPayloadSize: any(named: 'originalPayloadSize'),
+          onProgress: any(named: 'onProgress'),
+          cancellationToken: any(named: 'cancellationToken'),
+          useV21Security: any(named: 'useV21Security'),
+          integritySink: any(named: 'integritySink'),
+        ),
+      ).thenAnswer((invocation) async {
+        outputPath = invocation.namedArguments[#targetPath] as String;
+        // 'hi' + 非法 UTF-8 字节 0xFF
+        File(outputPath!).writeAsBytesSync([0x68, 0x69, 0xFF]);
+        return DecryptStreamResult(
+          payloadMetadata: const PayloadMetadata(
+            sourceType: SourceType.rawFile,
+            originalExtension: 'txt',
+          ),
+          targetPath: outputPath!,
+        );
+      });
+      when(
+        () => mockIntegrityService.createIntegritySink(
+          strawFileForHash: any(named: 'strawFileForHash'),
+          hmacKey: any(named: 'hmacKey'),
+        ),
+      ).thenReturn(FakeIntegritySink('sha256:testhash'));
+      when(() => mockCryptoService.clearSensitiveData()).thenReturn(null);
+
+      await tester.pumpWidget(createRouterTestableApp(container: container));
+      navigateToReader(tester, '/test/invalid-utf8.straw');
+      await tester.pumpAndSettle();
+
+      final decryptSheet = find.byType(BottomSheet);
+      expect(decryptSheet, findsOneWidget);
+      PathProviderPlatform.instance = FakePathProviderPlatform();
+      final tempDirectory = await tester.runAsync(
+        TempFileManager.getTempDirectory,
+      );
+      expect(tempDirectory, isNotEmpty);
+      await tester.enterText(
+        find.descendant(
+          of: decryptSheet,
+          matching: find.byType(TextField),
+        ),
+        base64Encode(Uint8List(32)),
+      );
+      await tester.pump();
+      final decryptButton = find.descendant(
+        of: decryptSheet,
+        matching: find.widgetWithText(NeumorphicButton, '解密'),
+      );
+      expect(
+        tester.widget<NeumorphicButton>(decryptButton).onPressed,
+        isNotNull,
+      );
+      await tester.tap(decryptButton);
+      await tester.pump();
+      // Neumorphic 解密按钮加载态：文字变为"解密中..."而非 CircularProgressIndicator
+      expect(find.textContaining('解密中'), findsOneWidget);
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 500)),
+      );
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.text('hi\uFFFD').evaluate().isNotEmpty) break;
+      }
+      await tester.runAsync(
+        () async {
+          for (var i = 0; i < 20 && File(outputPath!).existsSync(); i++) {
+            await Future<void>.delayed(const Duration(milliseconds: 50));
+          }
+        },
+      );
+      await tester.pump();
+
+      expect(outputPath, isNotNull);
+      expect(find.textContaining('读取解密内容失败'), findsNothing);
+      expect(tester.takeException(), isNull);
+      expect(File(outputPath!).existsSync(), isFalse);
+      expect(find.text('hi\uFFFD'), findsOneWidget);
       PathProviderPlatform.instance = previousPathProvider;
     });
 
