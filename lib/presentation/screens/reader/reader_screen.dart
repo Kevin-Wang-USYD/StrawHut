@@ -144,6 +144,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   /// 标记是否已弹出解密对话框
   bool _hasShownDecryptDialog = false;
 
+  /// 进入后台时清除了解密内容，回到前台时需要重新弹出解密对话框
+  bool _redecryptOnResume = false;
+
   /// 当前 .straw 文件路径，用于流式解密大文件
   String? _filePath;
 
@@ -167,12 +170,36 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 只在真正进入后台 / 退出时清理。不能响应 inactive：拉下通知栏、
+    // 打开多任务界面、桌面窗口失焦、弹出系统保存对话框都会触发 inactive，
+    // 那时删除临时文件会让正在显示的 PDF / 视频 / 音频失效。
     if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive ||
         state == AppLifecycleState.detached) {
-      // 清理临时文件（包含敏感解密数据）
-      _cleanupTempFile();
+      _discardTempContentForBackground();
+    } else if (state == AppLifecycleState.resumed && _redecryptOnResume) {
+      _redecryptOnResume = false;
+      if (mounted && _status == ReaderStatus.metaOnly) {
+        _showDecryptDialog();
+      }
     }
+  }
+
+  /// 进入后台时删除临时文件（包含敏感解密数据），并同步重置界面
+  ///
+  /// 依赖临时文件展示的内容在文件删除后无法继续显示，因此回到
+  /// 未解密状态，并在回到前台时重新弹出解密对话框，而不是保留一个
+  /// 指向已删除文件的"已解密"界面。
+  void _discardTempContentForBackground() {
+    if (_tempFilePath == null) return;
+    _cleanupTempFile();
+    if (!mounted || _status != ReaderStatus.decrypted) return;
+    setState(() {
+      _decryptResult = null;
+      _contentType = null;
+      _status = ReaderStatus.metaOnly;
+      _hasShownDecryptDialog = false;
+    });
+    _redecryptOnResume = true;
   }
 
   /// 清理临时文件

@@ -833,6 +833,114 @@ void main() {
       expect(find.text('streamed plain text'), findsOneWidget);
       PathProviderPlatform.instance = previousPathProvider;
     });
+
+    // 回归测试：inactive（通知栏、多任务、窗口失焦、系统保存对话框）不应
+    // 删除正在展示的解密文件；真正进入后台（paused）时才删除，并同步回到
+    // 未解密状态，回到前台时重新弹出解密对话框。
+    testWidgets('temp file survives inactive, is discarded on paused', (
+      WidgetTester tester,
+    ) async {
+      String? outputPath;
+      final previousPathProvider = PathProviderPlatform.instance;
+      addTearDown(() => PathProviderPlatform.instance = previousPathProvider);
+
+      when(
+        () => mockCryptoService.decryptStream(
+          strawFilePath: any(named: 'strawFilePath'),
+          key: any(named: 'key'),
+          targetPath: any(named: 'targetPath'),
+          chunkSize: any(named: 'chunkSize'),
+          originalPayloadSize: any(named: 'originalPayloadSize'),
+          onProgress: any(named: 'onProgress'),
+          cancellationToken: any(named: 'cancellationToken'),
+          useV21Security: any(named: 'useV21Security'),
+          integritySink: any(named: 'integritySink'),
+        ),
+      ).thenAnswer((invocation) async {
+        outputPath = invocation.namedArguments[#targetPath] as String;
+        File(outputPath!).writeAsBytesSync([1, 2, 3]);
+        return DecryptStreamResult(
+          payloadMetadata: const PayloadMetadata(
+            sourceType: SourceType.rawFile,
+            originalExtension: 'zip',
+            originalFileName: 'archive.zip',
+          ),
+          targetPath: outputPath!,
+        );
+      });
+      when(
+        () => mockIntegrityService.createIntegritySink(
+          strawFileForHash: any(named: 'strawFileForHash'),
+          hmacKey: any(named: 'hmacKey'),
+        ),
+      ).thenReturn(FakeIntegritySink('sha256:testhash'));
+      when(() => mockCryptoService.clearSensitiveData()).thenReturn(null);
+
+      await tester.pumpWidget(createRouterTestableApp(container: container));
+      navigateToReader(tester, '/test/archive.straw');
+      await tester.pumpAndSettle();
+
+      final decryptSheet = find.byType(BottomSheet);
+      expect(decryptSheet, findsOneWidget);
+      PathProviderPlatform.instance = FakePathProviderPlatform();
+      await tester.runAsync(TempFileManager.getTempDirectory);
+      await tester.enterText(
+        find.descendant(of: decryptSheet, matching: find.byType(TextField)),
+        base64Encode(Uint8List(32)),
+      );
+      await tester.pump();
+      await tester.tap(
+        find.descendant(
+          of: decryptSheet,
+          matching: find.widgetWithText(NeumorphicButton, '解密'),
+        ),
+      );
+      await tester.pump();
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 500)),
+      );
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.byTooltip('保存文件').evaluate().isNotEmpty) break;
+      }
+      expect(find.byTooltip('保存文件'), findsOneWidget);
+      expect(outputPath, isNotNull);
+      expect(File(outputPath!).existsSync(), isTrue);
+
+      // inactive：内容与文件都应保留
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      await tester.pump();
+      // 与 paused 阶段相同的等待方式：若此时会删除，这里足以让删除完成
+      await tester.runAsync(() async {
+        for (var i = 0; i < 20 && File(outputPath!).existsSync(); i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        }
+      });
+      await tester.pump();
+      expect(File(outputPath!).existsSync(), isTrue);
+      expect(find.byTooltip('保存文件'), findsOneWidget);
+
+      // paused：删除文件，界面回到未解密状态
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+      await tester.runAsync(() async {
+        for (var i = 0; i < 20 && File(outputPath!).existsSync(); i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        }
+      });
+      await tester.pump();
+      expect(File(outputPath!).existsSync(), isFalse);
+      expect(find.byTooltip('保存文件'), findsNothing);
+      expect(find.byType(MetaPreview), findsOneWidget);
+
+      // 回到前台：重新弹出解密对话框
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsOneWidget);
+    });
   });
 
   // ========================================================================
