@@ -149,7 +149,7 @@ class FallbackCryptoService implements ICryptoService {
   }) async {
     final delegate = await _getDelegate();
     try {
-      return delegate.encrypt(
+      return await delegate.encrypt(
         payloadBytes: payloadBytes,
         payloadMetadata: payloadMetadata,
         key: key,
@@ -188,7 +188,7 @@ class FallbackCryptoService implements ICryptoService {
   }) async {
     final delegate = await _getDelegate();
     try {
-      return delegate.decrypt(
+      return await delegate.decrypt(
         chunks: chunks,
         key: key,
         chunkSize: chunkSize,
@@ -227,7 +227,7 @@ class FallbackCryptoService implements ICryptoService {
   }) async {
     final delegate = await _getDelegate();
     try {
-      return delegate.encryptStream(
+      return await delegate.encryptStream(
         sourcePath: sourcePath,
         payloadMetadata: payloadMetadata,
         key: key,
@@ -268,7 +268,7 @@ class FallbackCryptoService implements ICryptoService {
   }) async {
     final delegate = await _getDelegate();
     try {
-      return delegate.decryptStream(
+      return await delegate.decryptStream(
         strawFilePath: strawFilePath,
         key: key,
         targetPath: targetPath,

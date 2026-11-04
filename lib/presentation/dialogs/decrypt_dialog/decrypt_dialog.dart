@@ -36,6 +36,7 @@ String _mapCryptoExceptionToMessage(CryptoException e, AppLocalizations l10n, {r
   switch (e.code) {
     // GCM 认证标签校验失败 = 密钥/暗号不匹配
     case 'CHUNK_DECRYPTION_FAILED':
+    case 'DECRYPTION_FAILED':
       return isPassphraseMode ? l10n.wrongPassphrase : l10n.wrongKey;
     // 文件相关问题
     case 'FILE_NOT_FOUND':

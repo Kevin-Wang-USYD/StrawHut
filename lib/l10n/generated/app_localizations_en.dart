@@ -495,4 +495,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fileUploadLabel => 'Upload File';
+
+  @override
+  String get wrongKey => 'Wrong key or corrupted file';
+
+  @override
+  String get wrongPassphrase => 'Wrong passphrase or corrupted file';
+
+  @override
+  String get errFileNotFound => 'File not found or has been moved';
+
+  @override
+  String get errInvalidFileFormat => 'Invalid or corrupted file format';
+
+  @override
+  String get errEmptyChunks => 'The file contains no encrypted data';
+
+  @override
+  String get errMetadataTruncated =>
+      'File metadata is incomplete; the file may be corrupted';
+
+  @override
+  String get errFirstChunkTooSmall =>
+      'File data is incomplete; the file may be corrupted';
+
+  @override
+  String get errInvalidSaltLength =>
+      'Invalid passphrase salt; the file may be corrupted';
+
+  @override
+  String get errDecryptStreamFailed =>
+      'An error occurred while decrypting the file. Please try again';
+
+  @override
+  String get errMetadataTooLarge =>
+      'File metadata is too large; the file may be corrupted';
+
+  @override
+  String get errChunkSizeTooSmall =>
+      'Invalid chunk size; the file may be corrupted';
+
+  @override
+  String get errKeyDerivationFailed =>
+      'Failed to derive key from passphrase. Please try again';
+
+  @override
+  String get errInvalidKeyLength => 'Invalid key length; expected 32 bytes';
+
+  @override
+  String get errUnknown => 'An unknown error occurred. Please try again';
+
+  @override
+  String get errDecryptGeneric =>
+      'An error occurred during decryption. Please try again';
+
+  @override
+  String get errKeyRequired => 'Please enter a key or upload a .key file';
+
+  @override
+  String get errInvalidKeyFormat => 'Invalid key format: not valid Base64 data';
+
+  @override
+  String get verifying => 'Verifying...';
 }
