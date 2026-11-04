@@ -7,6 +7,7 @@ import 'package:strawhut/core/crypto/crypto_models.dart';
 import 'package:strawhut/core/crypto/crypto_service.dart';
 import 'package:strawhut/core/file_io/file_io_service.dart';
 import 'package:strawhut/core/integrity/integrity_service.dart';
+import 'package:strawhut/core/utils/memory_utils.dart';
 import 'package:strawhut/data/models/card_meta.dart';
 import 'package:strawhut/data/models/format_version.dart';
 import 'package:strawhut/data/models/integrity_info.dart';
@@ -130,13 +131,16 @@ class MigrationService {
       );
 
       // 3. 先构建不含 hash 的文件，计算完整性哈希
+      // 迁移产物是 v2.1 文件（format_version 2.1.0，分块已绑定 AAD），
+      // 解密端对 v2.1 使用 HMAC-SHA256 校验，因此这里必须同样使用
+      // 从加密密钥派生的 HMAC，而不是无密钥 SHA-256。
       final strawFileForHash = StrawFile(
         formatVersion: FormatVersion.fromString(STRAW_FORMAT_VERSION),
         meta: meta,
         content: strawContent,
         integrity: const IntegrityInfo(
           hash: '',
-          hashAlgorithm: HASH_ALGORITHM_SHA256,
+          hashAlgorithm: HASH_ALGORITHM_HMAC_SHA256,
         ),
       );
 
@@ -146,7 +150,16 @@ class MigrationService {
         headerBytes: headerBytes,
         chunks: encryptResult.chunks,
       );
-      final hash = _integrityService.computeHashFromBytes(fileBytesWithoutHash);
+      final hmacKey = _cryptoService.deriveHmacKey(key);
+      final String hash;
+      try {
+        hash = _integrityService.computeHmacFromBytes(
+          fileBytesWithoutHash,
+          hmacKey,
+        );
+      } finally {
+        MemoryUtils.wipeBytes(hmacKey);
+      }
 
       // 4. 构建最终的 StrawFile（含完整性哈希）
       final strawFile = StrawFile(
@@ -155,7 +168,7 @@ class MigrationService {
         content: strawContent,
         integrity: IntegrityInfo(
           hash: hash,
-          hashAlgorithm: HASH_ALGORITHM_SHA256,
+          hashAlgorithm: HASH_ALGORITHM_HMAC_SHA256,
         ),
       );
 
