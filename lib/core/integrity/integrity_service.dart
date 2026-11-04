@@ -235,7 +235,7 @@ class IntegrityService implements IIntegrityService {
       // Format Version Major (2 bytes uint16 LE)
       ..add([BINARY_FORMAT_MAJOR & 0xFF, (BINARY_FORMAT_MAJOR >> 8) & 0xFF])
       // Format Version Minor (2 bytes uint16 LE)
-      ..add([BINARY_FORMAT_MINOR & 0xFF, (BINARY_FORMAT_MINOR >> 8) & 0xFF]);
+      ..add(_versionMinorBytes(strawFile));
 
     // JSON Header（strawFile 中的 integrity.hash 应为空字符串）
     final headerJson = strawFile.assembleHeaderToJson();
@@ -331,7 +331,7 @@ class IntegrityService implements IIntegrityService {
     final input = sha256.startChunkedConversion(outputSink)
       ..add(STRAW_MAGIC_BYTES)
       ..add([BINARY_FORMAT_MAJOR & 0xFF, (BINARY_FORMAT_MAJOR >> 8) & 0xFF])
-      ..add([BINARY_FORMAT_MINOR & 0xFF, (BINARY_FORMAT_MINOR >> 8) & 0xFF]);
+      ..add(_versionMinorBytes(strawFile));
 
     final headerBytes = utf8.encode(strawFile.assembleHeaderToJson());
     final headerSize = headerBytes.length;
@@ -411,10 +411,7 @@ class IntegrityService implements IIntegrityService {
       (BINARY_FORMAT_MAJOR >> 8) & 0xFF,
     ];
     hmac.update(Uint8List.fromList(majorBytes), 0, 2);
-    final minorBytes = [
-      BINARY_FORMAT_MINOR & 0xFF,
-      (BINARY_FORMAT_MINOR >> 8) & 0xFF,
-    ];
+    final minorBytes = _versionMinorBytes(strawFile);
     hmac.update(Uint8List.fromList(minorBytes), 0, 2);
 
     // JSON Header（strawFile 中的 integrity.hash 应为空字符串）
@@ -516,10 +513,7 @@ class IntegrityService implements IIntegrityService {
         2,
       )
       ..update(
-        Uint8List.fromList([
-          BINARY_FORMAT_MINOR & 0xFF,
-          (BINARY_FORMAT_MINOR >> 8) & 0xFF,
-        ]),
+        Uint8List.fromList(_versionMinorBytes(strawFile)),
         0,
         2,
       );
@@ -645,10 +639,7 @@ abstract class IntegritySink {
     ]);
 
     // Format Version Minor (2 bytes uint16 LE)
-    updateHeader([
-      BINARY_FORMAT_MINOR & 0xFF,
-      (BINARY_FORMAT_MINOR >> 8) & 0xFF,
-    ]);
+    updateHeader(_versionMinorBytes(strawFileForHash));
 
     // JSON Header（hash='' 版本）
     final headerJson = strawFileForHash.assembleHeaderToJson();
@@ -757,4 +748,14 @@ class _Sha256IntegritySink extends IntegritySink {
     _input.close();
     return 'sha256:${_collector.single}';
   }
+}
+
+/// 二进制头部中 Format Version Minor 字段（uint16 LE）的字节
+///
+/// 必须使用文件自身 JSON 头部中的次版本号，而不是当前写入用的常量
+/// [BINARY_FORMAT_MINOR]：v1.2.0 及更早版本写入的 v2.0 文件以 minor=0
+/// 计算哈希，若统一按 minor=1 计算，所有旧文件都会完整性校验失败。
+List<int> _versionMinorBytes(StrawFile strawFile) {
+  final minor = strawFile.formatVersion.minor;
+  return [minor & 0xFF, (minor >> 8) & 0xFF];
 }

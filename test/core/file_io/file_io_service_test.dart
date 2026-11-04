@@ -666,7 +666,8 @@ void main() {
       final majorVersion = bytes[8] | (bytes[9] << 8);
       final minorVersion = bytes[10] | (bytes[11] << 8);
       expect(majorVersion, equals(BINARY_FORMAT_MAJOR));
-      expect(minorVersion, equals(BINARY_FORMAT_MINOR));
+      // 次版本号与 JSON 头部 format_version 一致（fixture 为 2.0.0 → 0）
+      expect(minorVersion, equals(strawFile.formatVersion.minor));
     });
 
     test('应该按照正确的顺序组装二进制数据', () {
@@ -688,7 +689,8 @@ void main() {
 
       // 验证 Version Minor（2 字节 uint16 LE）
       final minorVersion = bytes[10] | (bytes[11] << 8);
-      expect(minorVersion, equals(BINARY_FORMAT_MINOR));
+      // 次版本号与 JSON 头部 format_version 一致（fixture 为 2.0.0 → 0）
+      expect(minorVersion, equals(strawFile.formatVersion.minor));
 
       // 验证 Header Size（4 字节 uint32 LE）
       final headerSize =
