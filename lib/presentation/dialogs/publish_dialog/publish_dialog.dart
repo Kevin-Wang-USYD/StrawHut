@@ -934,6 +934,7 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
       if (identical(_cancellationToken, cancellationToken)) {
         _cancellationToken = null;
       }
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _isCancelling = false;
@@ -943,6 +944,7 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
       if (identical(_cancellationToken, cancellationToken)) {
         _cancellationToken = null;
       }
+      if (!mounted) return;
       _showError(l10n.publishFailed(e.toString()));
       setState(() {
         _isLoading = false;
@@ -1403,8 +1405,24 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
     );
   }
 
+  /// 发布进行中（加密 + 保存）禁止通过返回键 / Esc 关闭页面
+  ///
+  /// 加密阶段关闭会在 dispose 中取消令牌，随后对已销毁的 State 调用
+  /// setState；保存阶段关闭则可能在随机密钥模式下"文件已保存但密钥
+  /// 从未展示"。拦截后等同于点击取消按钮：加密阶段停止加密，保存阶段
+  /// 不可取消，会正常完成并展示密钥。
   @override
   Widget build(BuildContext context) {
+    return PopScope(
+      canPop: !_isLoading,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleCancel();
+      },
+      child: _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final tokens = NeumorphicTokens.ofContext(context);
 
@@ -2245,8 +2263,24 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
     }
   }
 
+  /// 发布进行中（加密 + 保存）禁止通过返回键 / Esc 关闭页面
+  ///
+  /// 加密阶段关闭会在 dispose 中取消令牌，随后对已销毁的 State 调用
+  /// setState；保存阶段关闭则可能在随机密钥模式下"文件已保存但密钥
+  /// 从未展示"。拦截后等同于点击取消按钮：加密阶段停止加密，保存阶段
+  /// 不可取消，会正常完成并展示密钥。
   @override
   Widget build(BuildContext context) {
+    return PopScope(
+      canPop: !_isLoading,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleCancel();
+      },
+      child: _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     final tokens = NeumorphicTokens.ofContext(context);
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
@@ -3460,6 +3494,7 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
       if (identical(_cancellationToken, cancellationToken)) {
         _cancellationToken = null;
       }
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _isCancelling = false;
@@ -3469,6 +3504,7 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
       if (identical(_cancellationToken, cancellationToken)) {
         _cancellationToken = null;
       }
+      if (!mounted) return;
       _showMobileError(l10n.publishFailed(e.toString()));
       setState(() {
         _isLoading = false;
