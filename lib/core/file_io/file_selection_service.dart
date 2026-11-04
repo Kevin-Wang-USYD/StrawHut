@@ -376,7 +376,7 @@ class FileSelectionService {
     // Fallback to path-based reading
     if (file.path != null) {
       try {
-        return File(file.path!).readAsBytes();
+        return await File(file.path!).readAsBytes();
       } on Object {
         debugPrint(
             'FileSelectionService: Failed to read file at path: ${file.path}',);
