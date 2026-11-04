@@ -130,6 +130,25 @@ void main() {
       expect(binPath.endsWith('.bin'), isTrue);
     });
 
+    test('不可信扩展名（路径穿越）应回退为 bin 且文件留在临时目录内', () async {
+      final testBytes = Uint8List.fromList([1, 2, 3]);
+      final tempDir = await TempFileManager.getTempDirectory();
+
+      for (final malicious in [
+        r'x\..\..\..\Startup\a.bat',
+        'x/../../escape.sh',
+        '',
+        'toolongextension12345',
+      ]) {
+        final path = await TempFileManager.createTempFile(
+          extension: malicious,
+          bytes: testBytes,
+        );
+        expect(path.endsWith('.bin'), isTrue, reason: malicious);
+        expect(File(path).parent.path, tempDir, reason: malicious);
+      }
+    });
+
     test('应该支持创建大文件', () async {
       // 创建 1MB 的测试数据
       final largeBytes = Uint8List(1024 * 1024);

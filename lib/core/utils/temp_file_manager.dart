@@ -27,6 +27,17 @@ class TempFileManager {
     return '${timestamp}_$randomPart';
   }
 
+  /// 将扩展名限制为 1~16 位字母数字，否则回退为 'bin'
+  ///
+  /// 扩展名可能来自解密载荷中的 originalExtension（不可信数据）。
+  /// 若直接拼接，形如 `x\..\..\Startup\a.bat` 的值在 Windows 上会
+  /// 被按字面解析 `..`，把文件写到临时目录之外。
+  static String _safeExtension(String extension) {
+    return RegExp(r'^[A-Za-z0-9]{1,16}$').hasMatch(extension)
+        ? extension
+        : 'bin';
+  }
+
   /// 获取临时文件目录路径
   static Future<String> getTempDirectory() async {
     final baseDir = await getTemporaryDirectory();
@@ -56,7 +67,7 @@ class TempFileManager {
     final hex = randomBytes
         .map((b) => b.toRadixString(16).padLeft(2, '0'))
         .join();
-    final fileName = 'decrypt_$hex.$extension';
+    final fileName = 'decrypt_$hex.${_safeExtension(extension)}';
     return p.join(tempDir, fileName);
   }
 
@@ -72,7 +83,7 @@ class TempFileManager {
     await cleanAll();
 
     final tempDir = await getTempDirectory();
-    final fileName = '${_generateRandomName()}.$extension';
+    final fileName = '${_generateRandomName()}.${_safeExtension(extension)}';
     final filePath = p.join(tempDir, fileName);
     final file = File(filePath);
 
@@ -94,7 +105,7 @@ class TempFileManager {
     await cleanAll();
 
     final tempDir = await getTempDirectory();
-    final fileName = '${_generateRandomName()}.$extension';
+    final fileName = '${_generateRandomName()}.${_safeExtension(extension)}';
     final filePath = p.join(tempDir, fileName);
     final file = File(filePath);
 
