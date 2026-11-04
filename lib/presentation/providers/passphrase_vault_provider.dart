@@ -7,7 +7,11 @@ part 'passphrase_vault_provider.g.dart';
 /// 暗号保险库服务 Provider
 ///
 /// 提供全局单例的 PassphraseVaultService 实例，用于暗号的增删查操作。
-@riverpod
+///
+/// 必须 keepAlive：服务内部的互斥锁只在同一实例内生效。若为 autoDispose，
+/// 无人 watch 时每次 ref.read 都会创建新实例（各自持有独立的锁），
+/// 并发的写操作可能互相覆盖保险库数据。
+@Riverpod(keepAlive: true)
 PassphraseVaultService passphraseVaultService(PassphraseVaultServiceRef ref) {
   return PassphraseVaultService();
 }
