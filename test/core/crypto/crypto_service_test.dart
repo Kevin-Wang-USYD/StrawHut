@@ -76,6 +76,33 @@ void main() {
       expect(utf8.decode(decryptResult.payloadBytes), originalText);
     });
 
+    // 回归测试：头部声明的 original_payload_size 大于实际解密长度时，
+    // sublist 曾抛出 RangeError（Error，不是 Exception），解密对话框捕获不到，
+    // 界面一直停在加载中。
+    test('original_payload_size 大于实际数据时抛出 CryptoException', () async {
+      final cryptoService = _createCryptoService();
+      final key = await cryptoService.generateKey();
+      final encryptResult = await cryptoService.encrypt(
+        payloadBytes: Uint8List.fromList(utf8.encode('payload')),
+        payloadMetadata: _richTextMetadata(),
+        key: key.bytes,
+        useV21Security: false,
+      );
+
+      await expectLater(
+        cryptoService.decrypt(
+          chunks: encryptResult.chunks,
+          key: key.bytes,
+          chunkSize: encryptResult.chunkSize,
+          originalPayloadSize: encryptResult.originalPayloadSize + 1,
+        ),
+        throwsA(
+          isA<CryptoException>()
+              .having((e) => e.code, 'code', 'INVALID_FILE_FORMAT'),
+        ),
+      );
+    });
+
     test('加密中文内容可逆', () async {
       final cryptoService = _createCryptoService();
       final key = await cryptoService.generateKey();
