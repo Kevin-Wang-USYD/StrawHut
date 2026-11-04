@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # 与 .metadata 中记录的 Flutter 版本一致（revision 00b0c91）。
+  # 不要改成跟随最新 stable：flutter_quill 11.5.0 在 Flutter 3.47 上无法编译，
+  # 未固定版本正是旧 CI 持续失败的原因。升级 Flutter 时请同步升级依赖并改这里。
+  FLUTTER_VERSION: '3.41.9'
+
+jobs:
+  checks:
+    name: Analyze & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies (locked)
+        run: flutter pub get --enforce-lockfile
+
+      - name: Generated code is up to date
+        run: |
+          flutter gen-l10n
+          dart run build_runner build --delete-conflicting-outputs
+          if ! git diff --exit-code -- lib; then
+            echo "::error::生成的代码与源码不一致，请在本地运行 flutter gen-l10n 和 dart run build_runner build 后提交。"
+            exit 1
+          fi
+
+      - name: Analyze
+        # 仅 error / warning 阻断；info 级别的风格提示不阻断
+        run: flutter analyze --no-fatal-infos
+
+      - name: Test
+        run: flutter test --reporter expanded

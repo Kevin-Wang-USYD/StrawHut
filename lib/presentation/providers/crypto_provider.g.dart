@@ -6,7 +6,7 @@ part of 'crypto_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$cryptoServiceHash() => r'c6b078f084bf42b84cad25e21f12c06e92e8b242';
+String _$cryptoServiceHash() => r'bae000a7fbf890325539e473be4928ee8e75358a';
 
 /// 加密服务 Provider
 ///
