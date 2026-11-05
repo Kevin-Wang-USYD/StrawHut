@@ -647,7 +647,7 @@ class FileIOService implements IFileIOService {
     // 1. Magic + Version + HeaderSize + HeaderJson（hash='' 版本）
     final builder = BytesBuilder()..add(STRAW_MAGIC_BYTES);
     _writeUint16LE(builder, BINARY_FORMAT_MAJOR);
-    _writeUint16LE(builder, BINARY_FORMAT_MINOR);
+    _writeUint16LE(builder, strawFileForHash.formatVersion.minor);
     final headerJson = strawFileForHash.assembleHeaderToJson();
     final headerBytes = Uint8List.fromList(utf8.encode(headerJson));
     _writeUint32LE(builder, headerBytes.length);
@@ -692,7 +692,7 @@ class FileIOService implements IFileIOService {
     final chunksOffset = STRAW_MAGIC_BYTES.length + 4 + 4 + headerBytes.length;
     final finalBuilder = BytesBuilder()..add(STRAW_MAGIC_BYTES);
     _writeUint16LE(finalBuilder, BINARY_FORMAT_MAJOR);
-    _writeUint16LE(finalBuilder, BINARY_FORMAT_MINOR);
+    _writeUint16LE(finalBuilder, strawFileForHash.formatVersion.minor);
     _writeUint32LE(finalBuilder, headerBytesReal.length);
     finalBuilder
       ..add(headerBytesReal)
@@ -876,8 +876,9 @@ class FileIOService implements IFileIOService {
     _writeUint16LE(builder, BINARY_FORMAT_MAJOR);
 
     // 3. Format Version Minor (2 bytes uint16 LE)
-    // 新文件写入 v2.1（minor=1），启用 AAD + HMAC-SHA256 容器认证
-    _writeUint16LE(builder, BINARY_FORMAT_MINOR);
+    // 与 JSON 头部的次版本号保持一致（新文件为 v2.1，minor=1），
+    // 完整性哈希同样按该值计算
+    _writeUint16LE(builder, strawFile.formatVersion.minor);
 
     // 4. JSON Header
     final headerJson = strawFile.assembleHeaderToJson();

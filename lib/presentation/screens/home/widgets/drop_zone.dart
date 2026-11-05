@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 
+import 'package:strawhut/app/motion.dart';
 import 'package:strawhut/app/neumorphic_tokens.dart';
 import 'package:strawhut/core/file_io/file_extensions.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_container.dart';
@@ -67,6 +68,10 @@ class _DropZoneState extends State<DropZone> {
     // Use DropTarget 包裹拖拽区域，监听拖拽事件
     // desktop_drop 包提供跨平台拖拽支持
     final tokens = NeumorphicTokens.ofContext(context);
+    // 拖入时高亮为 primaryContainer 色调 + 2px primary 描边；
+    // 平时为 surfaceContainerHighest 凹槽 + 1px outlineVariant 描边
+    final foreground =
+        _isDragging ? tokens.onPrimaryContainer : tokens.textSecondary;
     return DropTarget(
       // 文件被拖入区域时触发
       // 设置 _isDragging 为 true，触发 UI 高亮反馈
@@ -96,36 +101,44 @@ class _DropZoneState extends State<DropZone> {
       },
       // 拖拽区域内容
       child: NeumorphicContainer(
-        // 凹陷容器：平时凹陷，拖入时切换为凸起高亮
+        // 色调凹槽：平时凹陷，拖入时切换为凸起高亮（primaryContainer）
         shape: _isDragging
             ? NeumorphicShape.convex
             : NeumorphicShape.concave,
         intensity: _isDragging
             ? NeumorphicIntensity.strong
             : NeumorphicIntensity.normal,
+        color: _isDragging ? tokens.inkWash : null,
+        border: Border.all(
+          color: _isDragging ? tokens.inkPrimary : tokens.divider,
+          width: _isDragging ? 2 : 1,
+        ),
         borderRadius: tokens.radiusLarge,
+        duration: StrawMotion.medium,
+        curve: StrawMotion.emphasized,
         height: 120,
         padding: EdgeInsets.zero,
         alignment: Alignment.center,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            NeumorphicIcon(
-              _isDragging ? StrawIcons.fileDownload : StrawIcons.cloudUpload,
-              size: 32,
-              color: _isDragging
-                  ? tokens.inkPrimary
-                  : tokens.textSecondary,
+            // 拖入时图标以弹簧曲线放大（减少动态效果时立即切换）
+            AnimatedScale(
+              scale: _isDragging ? 1.15 : 1.0,
+              duration: StrawMotion.duration(context, StrawMotion.medium),
+              curve: StrawMotion.spring,
+              child: NeumorphicIcon(
+                _isDragging ? StrawIcons.fileDownload : StrawIcons.cloudUpload,
+                size: 32,
+                color: _isDragging ? tokens.inkPrimary : tokens.textSecondary,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               '或将 .straw / .png 文件拖拽至此',
-              style: TextStyle(
-                color: _isDragging
-                    ? tokens.inkPrimary
-                    : tokens.textSecondary,
-                fontSize: 14,
-              ),
+              style: (Theme.of(context).textTheme.labelLarge ??
+                      const TextStyle(fontSize: 14))
+                  .copyWith(color: foreground),
             ),
           ],
         ),
@@ -193,8 +206,11 @@ class _DropZoneState extends State<DropZone> {
     final tokens = NeumorphicTokens.ofContext(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: tokens.error,
+        content: Text(
+          message,
+          style: TextStyle(color: tokens.onErrorContainer),
+        ),
+        backgroundColor: tokens.errorContainer,
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
       ),

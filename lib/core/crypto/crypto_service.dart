@@ -552,6 +552,17 @@ class CryptoService implements ICryptoService {
       await Future<void>.delayed(Duration.zero);
     }
 
+    // original_payload_size 来自文件头部（解密前不可信）。大于实际解密长度
+    // 时 sublist 会抛出 RangeError（属于 Error，解密对话框的 on Exception
+    // 捕获不到，界面会一直停在加载中），因此在截取前显式校验。
+    if (originalPayloadSize < 0 || originalPayloadSize > payloadBytes.length) {
+      throw CryptoException(
+        '原始载荷大小异常：头部声明 $originalPayloadSize 字节， '
+        '实际解密 ${payloadBytes.length} 字节',
+        code: 'INVALID_FILE_FORMAT',
+      );
+    }
+
     // 精确截取到 originalPayloadSize（确保与加密前一致）
     final resultBytes = payloadBytes.length == originalPayloadSize
         ? payloadBytes

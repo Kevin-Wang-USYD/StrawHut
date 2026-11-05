@@ -6,7 +6,7 @@ part of 'card_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$currentCardHash() => r'3fea240a6be673d091e7ccedc2615617bb62f2fc';
+String _$currentCardHash() => r'e6996eeabd82568ab67671d7b2292c3e7a54f1c3';
 
 /// 当前加载的知识卡片 Provider
 ///
@@ -14,7 +14,7 @@ String _$currentCardHash() => r'3fea240a6be673d091e7ccedc2615617bb62f2fc';
 /// 当前正在查看的知识卡片文件状态。
 ///
 /// 架构位置：应用层 - Riverpod Provider
-/// 状态类型：AsyncValue<ParsedStrawFile?>（异步数据流，支持 loading/success/error 状态）
+/// 状态类型：`AsyncValue<ParsedStrawFile?>`（异步数据流，支持 loading/success/error 状态）
 /// keepAlive: false（页面销毁后自动清空，不保留缓存）
 ///
 /// 使用场景：

@@ -135,9 +135,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     showDialog<bool>(
       context: context,
       builder: (dialogContext) => Dialog(
-        backgroundColor: tokens.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+        backgroundColor: tokens.surfaceContainerHigh,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(32)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -148,8 +149,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
               Text(
                 '发现草稿',
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 22,
+                  height: 28 / 22,
+                  fontWeight: FontWeight.w700,
                   color: tokens.textPrimary,
                 ),
               ),
@@ -239,7 +241,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     );
   }
 
-  /// 构建软质浮动 AppBar
+  /// 构建 AppBar（透明底，标题 titleLarge w700）
   PreferredSize _buildAppBar(BuildContext context, NeumorphicTokens tokens) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight + 8),
@@ -258,16 +260,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                 child: Text(
                   _isPreviewMode ? '预览模式' : '编辑知识卡片',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 22,
+                    height: 28 / 22,
+                    fontWeight: FontWeight.w700,
                     color: tokens.textPrimary,
                   ),
                 ),
               ),
+              // 发布是本页主操作：使用色调底突出
               NeumorphicIconButton(
                 icon: StrawIcons.publish,
                 tooltip: '发布',
-                color: tokens.inkPrimary,
+                tonal: true,
                 onPressed: () => _handlePublish(context),
               ),
             ],
@@ -277,11 +281,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     );
   }
 
-  /// 构建软质底部操作栏
+  /// 构建底部操作栏（居中的色调胶囊按钮）
   Widget _buildBottomBar(BuildContext context, NeumorphicTokens tokens) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -290,9 +294,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
               icon: _isPreviewMode ? StrawIcons.editNote : StrawIcons.eye,
               padding: const EdgeInsets.symmetric(
                 horizontal: 24,
-                vertical: 12,
+                vertical: 14,
               ),
-              minimumSize: const Size(48, 48),
+              minimumSize: const Size(48, 56),
               onPressed: _toggleMode,
             ),
           ],
@@ -329,9 +333,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     showDialog<bool>(
       context: context,
       builder: (dialogContext) => Dialog(
-        backgroundColor: tokens.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+        backgroundColor: tokens.surfaceContainerHigh,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(32)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -342,8 +347,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
               Text(
                 '确认离开？',
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 22,
+                  height: 28 / 22,
+                  fontWeight: FontWeight.w700,
                   color: tokens.textPrimary,
                 ),
               ),

@@ -16,7 +16,7 @@ import 'package:strawhut/presentation/widgets/neumorphic_icon.dart';
 ///
 /// 核心功能：
 /// - 显示文件信息（文件名、类型）
-/// - 根据内容类型显示对应软质图标
+/// - 根据内容类型显示对应线性图标（primaryContainer 圆形徽章）
 /// - 提供保存文件按钮（NeumorphicButton）
 class FileSavePrompt extends StatelessWidget {
   /// 创建文件保存提示组件实例
@@ -28,7 +28,8 @@ class FileSavePrompt extends StatelessWidget {
   /// - [onSave] - 保存文件回调
   const FileSavePrompt({
     required this.metadata,
-    required this.onSave, this.tempFilePath,
+    required this.onSave,
+    this.tempFilePath,
     this.contentType,
     super.key,
   });
@@ -127,96 +128,106 @@ class FileSavePrompt extends StatelessWidget {
     final canSave = tempFilePath != null;
 
     return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 500),
-        child: NeumorphicContainer(
-          intensity: NeumorphicIntensity.subtle,
-          borderRadius: tokens.radiusXLarge,
-          margin: const EdgeInsets.all(24),
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 文件图标（凹陷圆形软质容器内放置线性图标）
-              NeumorphicContainer(
-                shape: NeumorphicShape.flat,
-                borderRadius: 48,
-                width: 96,
-                height: 96,
-                alignment: Alignment.center,
-                padding: EdgeInsets.zero,
-                child: NeumorphicIcon(
-                  _getFileIconBody(),
-                  size: 40,
-                  color: tokens.inkPrimary,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 文件名
-              Text(
-                fileName,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: tokens.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // 文件类型标签（凹陷软质胶囊）
-              NeumorphicContainer(
-                shape: NeumorphicShape.flat,
-                intensity: NeumorphicIntensity.subtle,
-                borderRadius: 12,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                child: Text(
-                  '$typeLabel 文件',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: tokens.textSecondary,
-                    fontWeight: FontWeight.w500,
+      child: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          // 色调卡片（surfaceContainerLow，圆角 28，与其他卡片一致）
+          child: NeumorphicContainer(
+            shape: NeumorphicShape.flat,
+            color: tokens.surfaceContainerLow,
+            borderRadius: tokens.radiusLarge,
+            margin: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 文件图标（primaryContainer 圆形徽章内放置线性图标）
+                NeumorphicContainer(
+                  shape: NeumorphicShape.flat,
+                  color: tokens.inkWash,
+                  borderRadius: 48,
+                  width: 96,
+                  height: 96,
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.zero,
+                  child: NeumorphicIcon(
+                    _getFileIconBody(),
+                    size: 40,
+                    color: tokens.onPrimaryContainer,
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // 提示文字
-              Text(
-                '此$typeLabel文件需要保存到本地后查看，\n请选择保存位置。',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: tokens.textSecondary,
-                  height: 1.6,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 保存按钮（软质主按钮）
-              NeumorphicButton(
-                label: '保存文件',
-                icon: StrawIcons.saveAlt,
-                style: NeumorphicButtonStyle.primary,
-                onPressed: canSave ? onSave : null,
-              ),
-
-              // 临时文件不可用时的提示
-              if (!canSave) ...[
-                const SizedBox(height: 8),
+                // 文件名
                 Text(
-                  '临时文件不可用',
+                  fileName,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: tokens.error,
+                    fontSize: 22,
+                    height: 28 / 22,
+                    fontWeight: FontWeight.w700,
+                    color: tokens.textPrimary,
                   ),
                 ),
+                const SizedBox(height: 12),
+
+                // 文件类型标签（圆角 10 色调胶囊）
+                NeumorphicContainer(
+                  shape: NeumorphicShape.flat,
+                  color: tokens.secondaryContainer,
+                  borderRadius: 10,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  child: Text(
+                    '$typeLabel 文件',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 20 / 14,
+                      color: tokens.onSecondaryContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // 提示文字
+                Text(
+                  '此$typeLabel文件需要保存到本地后查看，\n请选择保存位置。',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 24 / 16,
+                    color: tokens.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // 保存按钮（填充主按钮）
+                NeumorphicButton(
+                  label: '保存文件',
+                  icon: StrawIcons.saveAlt,
+                  style: NeumorphicButtonStyle.primary,
+                  minimumSize: const Size(180, 56),
+                  onPressed: canSave ? onSave : null,
+                ),
+
+                // 临时文件不可用时的提示
+                if (!canSave) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    '临时文件不可用',
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 16 / 12,
+                      fontWeight: FontWeight.w700,
+                      color: tokens.error,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

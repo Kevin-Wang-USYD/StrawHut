@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:strawhut/app/neumorphic_tokens.dart';
 import 'package:strawhut/core/passphrase_vault/passphrase_entry.dart';
 import 'package:strawhut/l10n/l10n.dart';
+import 'package:strawhut/presentation/dialogs/passphrase_vault_dialog/widgets/vault_styles.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_button.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_container.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_icon.dart';
@@ -9,7 +10,7 @@ import 'package:strawhut/presentation/widgets/neumorphic_icon.dart';
 /// 暗号保险库条目卡片组件
 ///
 /// 展示单条暗号条目的信息，包括：
-/// - 锁图标 + 备注名称（标题）
+/// - 色调锁图标徽标 + 备注名称（标题）
 /// - 创建时间（副标题，格式 YYYY-MM-DD HH:mm）
 /// - 暗号内容（默认遮罩为 "********"，可通过眼睛图标切换显示）
 /// - 删除按钮
@@ -62,17 +63,20 @@ class _PassphraseEntryTileState extends State<PassphraseEntryTile> {
     final l10n = AppLocalizations.of(context)!;
     final tokens = NeumorphicTokens.ofContext(context);
 
+    // 列表条目：圆角 16 的色调卡片（无投影），前导色调图标徽标
     return NeumorphicContainer(
+      shape: NeumorphicShape.flat,
+      color: tokens.surfaceContainerLowest,
       borderRadius: tokens.radiusMedium,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          // 左侧锁图标
-          NeumorphicIcon(
-            StrawIcons.lock,
-            size: 20,
-            color: tokens.inkPrimary,
+          // 左侧色调锁图标
+          TonalIconBadge(
+            icon: StrawIcons.lock,
+            background: tokens.secondaryContainer,
+            foreground: tokens.onSecondaryContainer,
           ),
           const SizedBox(width: 12),
 
@@ -85,24 +89,24 @@ class _PassphraseEntryTileState extends State<PassphraseEntryTile> {
                 Text(
                   widget.entry.label,
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    height: 24 / 16,
+                    fontWeight: FontWeight.w700,
                     color: tokens.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
 
                 // 创建时间（副标题）
                 Text(
                   _formatDateTime(widget.entry.createdAt),
                   style: TextStyle(
                     fontSize: 12,
+                    height: 16 / 12,
                     color: tokens.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 6),
 
                 // 暗号内容行
                 Row(
@@ -113,25 +117,27 @@ class _PassphraseEntryTileState extends State<PassphraseEntryTile> {
                             ? widget.entry.passphrase
                             : '********',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           fontFamily: 'monospace',
                           color: _isPassphraseVisible
                               ? tokens.textPrimary
-                              : tokens.textHint,
+                              : tokens.textSecondary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 4),
-                    // 眼睛切换图标
+                    // 眼睛切换图标（48×48 触摸目标）
                     NeumorphicIconButton(
                       icon: _isPassphraseVisible
                           ? StrawIcons.eye
                           : StrawIcons.eyeOff,
-                      size: 32,
-                      iconSize: 16,
+                      iconSize: 18,
                       color: tokens.textSecondary,
+                      // 仅读屏朗读（不新增可见文字）
+                      semanticLabel:
+                          _isPassphraseVisible ? '隐藏暗号' : '显示暗号',
                       onPressed: () {
                         setState(() {
                           _isPassphraseVisible = !_isPassphraseVisible;
@@ -144,13 +150,10 @@ class _PassphraseEntryTileState extends State<PassphraseEntryTile> {
             ),
           ),
 
-          const SizedBox(width: 4),
-
-          // 右侧删除按钮
+          // 右侧删除按钮（48×48 触摸目标）
           NeumorphicIconButton(
             icon: StrawIcons.trash,
-            size: 36,
-            iconSize: 18,
+            iconSize: 20,
             color: tokens.error,
             onPressed: widget.onDelete,
             tooltip: l10n.delete,

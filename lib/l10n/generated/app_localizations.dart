@@ -955,6 +955,114 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'上传文件'**
   String get fileUploadLabel;
+
+  /// 密钥解密失败（GCM 认证失败）提示
+  ///
+  /// In zh, this message translates to:
+  /// **'密钥错误或文件已损坏'**
+  String get wrongKey;
+
+  /// 暗号解密失败（GCM 认证失败）提示
+  ///
+  /// In zh, this message translates to:
+  /// **'暗号错误或文件已损坏'**
+  String get wrongPassphrase;
+
+  /// 解密时源文件不存在提示
+  ///
+  /// In zh, this message translates to:
+  /// **'文件不存在或已被移动'**
+  String get errFileNotFound;
+
+  /// 文件格式无效提示
+  ///
+  /// In zh, this message translates to:
+  /// **'文件格式无效或已损坏'**
+  String get errInvalidFileFormat;
+
+  /// 分块列表为空提示
+  ///
+  /// In zh, this message translates to:
+  /// **'文件不包含加密数据'**
+  String get errEmptyChunks;
+
+  /// 元数据被截断提示
+  ///
+  /// In zh, this message translates to:
+  /// **'文件元数据不完整，文件可能已损坏'**
+  String get errMetadataTruncated;
+
+  /// 第一个分块过小提示
+  ///
+  /// In zh, this message translates to:
+  /// **'文件数据不完整，文件可能已损坏'**
+  String get errFirstChunkTooSmall;
+
+  /// 盐值长度不正确提示
+  ///
+  /// In zh, this message translates to:
+  /// **'暗号盐值无效，文件可能已损坏'**
+  String get errInvalidSaltLength;
+
+  /// 流式解密失败提示
+  ///
+  /// In zh, this message translates to:
+  /// **'解密文件时出错，请重试'**
+  String get errDecryptStreamFailed;
+
+  /// 元数据过大提示
+  ///
+  /// In zh, this message translates to:
+  /// **'文件元数据过大，文件可能已损坏'**
+  String get errMetadataTooLarge;
+
+  /// 分块大小过小提示
+  ///
+  /// In zh, this message translates to:
+  /// **'文件分块参数无效，文件可能已损坏'**
+  String get errChunkSizeTooSmall;
+
+  /// PBKDF2 密钥派生失败提示
+  ///
+  /// In zh, this message translates to:
+  /// **'暗号密钥派生失败，请重试'**
+  String get errKeyDerivationFailed;
+
+  /// 密钥长度不正确提示
+  ///
+  /// In zh, this message translates to:
+  /// **'密钥长度不正确，应为 32 字节'**
+  String get errInvalidKeyLength;
+
+  /// 未知加密错误提示
+  ///
+  /// In zh, this message translates to:
+  /// **'发生未知错误，请重试'**
+  String get errUnknown;
+
+  /// 解密过程中的通用错误提示
+  ///
+  /// In zh, this message translates to:
+  /// **'解密过程中发生错误，请重试'**
+  String get errDecryptGeneric;
+
+  /// 未输入密钥提示
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入密钥或上传 .key 文件'**
+  String get errKeyRequired;
+
+  /// 密钥 Base64 解析失败提示
+  ///
+  /// In zh, this message translates to:
+  /// **'密钥格式不正确，无法解析为有效的 Base64 数据'**
+  String get errInvalidKeyFormat;
+
+  /// 解密完成后完整性校验阶段按钮文字
+  ///
+  /// In zh, this message translates to:
+  /// **'校验中...'**
+  String get verifying;
 }
 
 class _AppLocalizationsDelegate

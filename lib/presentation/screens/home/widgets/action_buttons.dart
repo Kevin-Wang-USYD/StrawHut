@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:strawhut/app/motion.dart';
 import 'package:strawhut/app/neumorphic_tokens.dart';
 import 'package:strawhut/presentation/dialogs/publish_dialog/publish_dialog.dart';
 import 'package:strawhut/presentation/providers/card_provider.dart';
@@ -17,7 +18,7 @@ import 'package:strawhut/presentation/widgets/neumorphic_icon.dart';
 
 /// 首页操作按钮组件
 ///
-/// 显示首页的核心操作按钮组，包括：
+/// 以两列色调操作卡显示首页的核心操作，包括：
 /// - "新建知识卡片" 按钮：导航到 EditorScreen
 /// - "打开知识卡片" 按钮：触发文件选择器，选择 .straw 文件后导航到 ReaderScreen
 ///
@@ -35,41 +36,38 @@ class ActionButtons extends ConsumerWidget {
 
   /// 构建按钮 UI
   ///
-  /// 布局结构：
-  /// - Column 布局，垂直排列两个按钮
-  /// - 使用 ElevatedButton 样式，带有图标和文字
-  /// - 按钮之间有足够的间距
+  /// 布局结构（M3 Expressive）：
+  /// - 两列等高的色调操作卡（[ActionTile]），左"发布"、右"解密"
+  /// - 卡片之间 12px 间距，整体横向撑满
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isMobile = !kIsWeb &&
-        (defaultTargetPlatform == TargetPlatform.android ||
-            defaultTargetPlatform == TargetPlatform.iOS);
-    final minHeight = isMobile ? 56.0 : 48.0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // "发布知识卡片"：主 CTA（墨色填充）
-        NeumorphicButton(
-          label: '发布知识卡片',
-          icon: StrawIcons.plusCircle,
-          style: NeumorphicButtonStyle.primary,
-          expanded: true,
-          minimumSize: Size(double.infinity, minHeight),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-          onPressed: () => _onCreateNewCard(context),
-        ),
-        const SizedBox(height: 16),
-        // "解密知识卡片"：次级 CTA（软质凸起）
-        NeumorphicButton(
-          label: '解密知识卡片',
-          icon: StrawIcons.folderOpen,
-          expanded: true,
-          minimumSize: Size(double.infinity, minHeight),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-          onPressed: () => _onOpenCard(context, ref),
-        ),
-      ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // "发布知识卡片"：主入口（primary 填充，在 primaryContainer 主卡片上最突出）
+          Expanded(
+            child: ActionTile(
+              label: '发布知识卡片',
+              subtitle: '编辑富文本或加密文件',
+              icon: StrawIcons.plusCircle,
+              tone: ActionTileTone.primary,
+              onPressed: () => _onCreateNewCard(context),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // "解密知识卡片"：次入口（tertiaryContainer）
+          Expanded(
+            child: ActionTile(
+              label: '解密知识卡片',
+              subtitle: '打开 .straw / .png',
+              icon: StrawIcons.folderOpen,
+              tone: ActionTileTone.tertiary,
+              onPressed: () => _onOpenCard(context, ref),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -90,19 +88,20 @@ class ActionButtons extends ConsumerWidget {
     }
   }
 
-  /// 桌面端：弹出软质选择对话框
+  /// 桌面端：弹出选择对话框（M3 对话框：surfaceContainerHigh 底、32 圆角）
   ///
-  /// 约束：两个选项 UI 权重一致（都用 secondary 软质按钮），
+  /// 约束：两个选项 UI 权重一致（都用 secondary 色调按钮），
   /// 垂直排列在底部，宽度增加。
   void _showCreateOptionsDesktop(BuildContext context) {
     final tokens = NeumorphicTokens.ofContext(context);
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
+        final textTheme = Theme.of(dialogContext).textTheme;
         return Dialog(
-          backgroundColor: tokens.surface,
+          backgroundColor: tokens.surfaceContainerHigh,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+            borderRadius: BorderRadius.circular(_kDialogRadius),
           ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 380),
@@ -114,17 +113,14 @@ class ActionButtons extends ConsumerWidget {
                 children: [
                   Text(
                     '发布知识卡片',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                    style: textTheme.headlineSmall?.copyWith(
                       color: tokens.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     '请选择内容来源：',
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: textTheme.bodyMedium?.copyWith(
                       color: tokens.textSecondary,
                     ),
                   ),
@@ -172,31 +168,29 @@ class ActionButtons extends ConsumerWidget {
     );
   }
 
-  /// 移动端：弹出底部软质选择框
+  /// 移动端：弹出底部选择面板（surfaceContainerLow 底、32 顶部圆角）
   ///
   /// 约束：两个 ListTile 权重一致，垂直排列。
   void _showCreateOptionsMobile(BuildContext context) {
     final tokens = NeumorphicTokens.ofContext(context);
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: tokens.surface,
-      shape: RoundedRectangleBorder(
+      backgroundColor: tokens.surfaceContainerLow,
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(tokens.radiusXLarge),
+          top: Radius.circular(_kDialogRadius),
         ),
       ),
       builder: (sheetContext) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.only(bottom: 12),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const _SheetHandle(),
                 ListTile(
-                  leading: NeumorphicIcon(
-                    StrawIcons.editNote,
-                    color: tokens.textPrimary,
-                  ),
+                  leading: const _TonalLeadingIcon(StrawIcons.editNote),
                   title: const Text('富文本编辑'),
                   subtitle: const Text('在编辑器中创作内容后发布'),
                   onTap: () {
@@ -205,10 +199,7 @@ class ActionButtons extends ConsumerWidget {
                   },
                 ),
                 ListTile(
-                  leading: NeumorphicIcon(
-                    StrawIcons.uploadFile,
-                    color: tokens.textPrimary,
-                  ),
+                  leading: const _TonalLeadingIcon(StrawIcons.uploadFile),
                   title: const Text('直接加密文件'),
                   subtitle: const Text('选择文件直接加密，无需编辑'),
                   onTap: () {
@@ -248,29 +239,27 @@ class ActionButtons extends ConsumerWidget {
     }
   }
 
-  /// 在 Android 上弹出文件来源选择软质底部框
+  /// 在 Android 上弹出文件来源选择底部面板（32 顶部圆角）
   void _showOpenCardOptions(BuildContext context, WidgetRef ref) {
     final tokens = NeumorphicTokens.ofContext(context);
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: tokens.surface,
-      shape: RoundedRectangleBorder(
+      backgroundColor: tokens.surfaceContainerLow,
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(tokens.radiusXLarge),
+          top: Radius.circular(_kDialogRadius),
         ),
       ),
       builder: (BuildContext sheetContext) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.only(bottom: 12),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const _SheetHandle(),
                 ListTile(
-                  leading: NeumorphicIcon(
-                    StrawIcons.image,
-                    color: tokens.textPrimary,
-                  ),
+                  leading: const _TonalLeadingIcon(StrawIcons.image),
                   title: const Text('从相册加载'),
                   subtitle: const Text('选择 .png 格式的加密知识卡片图片'),
                   onTap: () {
@@ -281,10 +270,7 @@ class ActionButtons extends ConsumerWidget {
                   },
                 ),
                 ListTile(
-                  leading: NeumorphicIcon(
-                    StrawIcons.folderOpen,
-                    color: tokens.textPrimary,
-                  ),
+                  leading: const _TonalLeadingIcon(StrawIcons.folderOpen),
                   title: const Text('从文件系统加载'),
                   subtitle: const Text('选择 .straw 或 .png 文件'),
                   onTap: () {
@@ -359,5 +345,210 @@ class ActionButtons extends ConsumerWidget {
         context.go('/reader?path=${Uri.encodeComponent(fileName)}');
       }
     }
+  }
+}
+
+/// 对话框/底部面板圆角（规范：对话框四角 32，底部面板顶部 32）
+const double _kDialogRadius = 32;
+
+/// 底部面板顶部的装饰性拖动指示条（纯视觉，不参与交互与语义）
+class _SheetHandle extends StatelessWidget {
+  const _SheetHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = NeumorphicTokens.ofContext(context);
+    return ExcludeSemantics(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 16, bottom: 12),
+        child: Container(
+          width: 32,
+          height: 4,
+          decoration: BoxDecoration(
+            color: tokens.textHint.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 底部面板列表项的前导图标：secondaryContainer 色调圆形底 + onSecondaryContainer 图标
+class _TonalLeadingIcon extends StatelessWidget {
+  const _TonalLeadingIcon(this.icon);
+
+  final String icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = NeumorphicTokens.ofContext(context);
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: tokens.secondaryContainer,
+        shape: BoxShape.circle,
+      ),
+      child: NeumorphicIcon(
+        icon,
+        size: 20,
+        color: tokens.onSecondaryContainer,
+      ),
+    );
+  }
+}
+
+/// [ActionTile] 的配色
+enum ActionTileTone {
+  /// primary 填充 + onPrimary 文字（主入口）
+  ///
+  /// 操作卡位于首页 primaryContainer 主卡片内，因此主入口用 primary 实色，
+  /// 避免与主卡片底色融为一体。
+  primary,
+
+  /// tertiaryContainer 底 + tertiary 图标圆（次入口）
+  tertiary,
+}
+
+/// 首页两列色调操作卡（M3 Expressive）
+///
+/// - 顶部圆形图标，其下标题 + 说明（顶部对齐），最小高度 120
+/// - 按下：弹簧缩放到 0.95，圆角从 28 收到 20（减少动态效果时立即切换）
+/// - 使用 InkWell：涟漪、键盘焦点与回车/空格激活由框架提供；
+///   语义上合并为一个带标题的按钮节点
+class ActionTile extends StatefulWidget {
+  const ActionTile({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+    super.key,
+    this.subtitle,
+    this.tone = ActionTileTone.primary,
+  });
+
+  /// 标题
+  final String label;
+
+  /// 说明文字（可选，一行）
+  final String? subtitle;
+
+  /// 图标 SVG body（来自 [StrawIcons]）
+  final String icon;
+
+  /// 点击回调
+  final VoidCallback onPressed;
+
+  /// 配色
+  final ActionTileTone tone;
+
+  @override
+  State<ActionTile> createState() => _ActionTileState();
+}
+
+class _ActionTileState extends State<ActionTile> {
+  static const double _radius = 28;
+  static const double _pressedRadius = 20;
+
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = NeumorphicTokens.ofContext(context);
+    final textTheme = Theme.of(context).textTheme;
+    final isPrimary = widget.tone == ActionTileTone.primary;
+    final background = isPrimary ? tokens.inkPrimary : tokens.tertiaryContainer;
+    final foreground = isPrimary ? tokens.onPrimary : tokens.onTertiaryContainer;
+    final badge = isPrimary ? tokens.onPrimary : tokens.success;
+    final onBadge = isPrimary ? tokens.inkPrimary : tokens.onTertiary;
+    final duration = StrawMotion.duration(context, StrawMotion.short);
+
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: AnimatedScale(
+          scale: _pressed ? 0.95 : 1.0,
+          duration: duration,
+          curve: StrawMotion.spring,
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(end: _pressed ? _pressedRadius : _radius),
+            duration: duration,
+            curve: StrawMotion.spring,
+            builder: (context, radius, child) {
+              final shape = RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(radius.clamp(12, 36)),
+              );
+              return Material(
+                color: background,
+                shape: shape,
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  customBorder: shape,
+                  onTap: widget.onPressed,
+                  onHighlightChanged: (value) =>
+                      setState(() => _pressed = value),
+                  splashColor: foreground.withValues(alpha: 0.12),
+                  highlightColor: foreground.withValues(alpha: 0.08),
+                  child: child,
+                ),
+              );
+            },
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 120),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                // 顶部对齐：两张卡片的标题始终在同一水平线上（说明文字
+                // 换行时多出的高度留在底部），等高由外层 IntrinsicHeight 保证
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: badge,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: NeumorphicIcon(
+                        widget.icon,
+                        size: 20,
+                        color: onBadge,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.label,
+                          style: textTheme.titleMedium?.copyWith(
+                            color: foreground,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        if (widget.subtitle != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.subtitle!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: foreground.withValues(alpha: 0.86),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
+import 'package:strawhut/app/neumorphic_tokens.dart';
 import 'package:strawhut/presentation/screens/editor/widgets/quill_editor.dart';
 
 /// Quill 内容查看器组件
@@ -133,7 +134,14 @@ class _QuillViewerState extends State<QuillViewer> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final tokens = NeumorphicTokens.ofContext(context);
+    // 阅读正文：17/30，onSurface
+    final body = (theme.textTheme.bodyLarge ?? const TextStyle()).copyWith(
+      fontSize: 17,
+      height: 30 / 17,
+      fontWeight: FontWeight.w400,
+      color: tokens.textPrimary,
+    );
 
     // 检查文档是否有效
     if (!_parseSuccess) {
@@ -146,19 +154,26 @@ class _QuillViewerState extends State<QuillViewer> {
               Icon(
                 Icons.error_outline,
                 size: 64,
-                color: theme.colorScheme.error,
+                color: tokens.error,
               ),
               const SizedBox(height: 16),
               Text(
                 '内容解析失败',
-                style: theme.textTheme.titleLarge,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontSize: 22,
+                  height: 28 / 22,
+                  fontWeight: FontWeight.w700,
+                  color: tokens.textPrimary,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 '知识卡片内容格式不正确，无法渲染。',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 14,
+                  height: 20 / 14,
+                  color: tokens.textSecondary,
                 ),
               ),
             ],
@@ -168,13 +183,13 @@ class _QuillViewerState extends State<QuillViewer> {
     }
 
     return Container(
-      // 背景色，适配主题
+      // 背景色：与页面一致的平铺 surface（阅读正文不放在卡片/玻璃上）
       decoration: BoxDecoration(
-        color: isDark ? Colors.grey[850] : Colors.white,
+        color: tokens.surface,
       ),
       // 使用 SingleChildScrollView 包裹，支持长文档滚动
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
           child: quill.QuillEditor.basic(
@@ -195,56 +210,52 @@ class _QuillViewerState extends State<QuillViewer> {
               // 自定义样式，适配主题
               customStyles: quill.DefaultStyles(
                 paragraph: quill.DefaultTextBlockStyle(
-                  theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16),
+                  body,
                   quill.HorizontalSpacing.zero,
-                  const quill.VerticalSpacing(8, 8),
+                  const quill.VerticalSpacing(6, 6),
                   quill.VerticalSpacing.zero,
                   null,
                 ),
                 h1: quill.DefaultTextBlockStyle(
-                  theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  (theme.textTheme.headlineMedium ?? const TextStyle())
+                      .copyWith(
+                    fontWeight: FontWeight.w800,
                     fontSize: 28,
-                  ) ??
-                      const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    height: 36 / 28,
+                    letterSpacing: -0.5,
+                    color: tokens.textPrimary,
+                  ),
                   quill.HorizontalSpacing.zero,
-                  const quill.VerticalSpacing(16, 8),
+                  const quill.VerticalSpacing(20, 8),
                   quill.VerticalSpacing.zero,
                   null,
                 ),
                 h2: quill.DefaultTextBlockStyle(
-                  theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  (theme.textTheme.headlineSmall ?? const TextStyle()).copyWith(
+                    fontWeight: FontWeight.w700,
                     fontSize: 22,
-                  ) ??
-                      const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    height: 28 / 22,
+                    color: tokens.textPrimary,
+                  ),
                   quill.HorizontalSpacing.zero,
-                  const quill.VerticalSpacing(12, 6),
+                  const quill.VerticalSpacing(16, 6),
                   quill.VerticalSpacing.zero,
                   null,
                 ),
                 h3: quill.DefaultTextBlockStyle(
-                  theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
+                  (theme.textTheme.titleLarge ?? const TextStyle()).copyWith(
+                    fontWeight: FontWeight.w700,
                     fontSize: 18,
-                  ) ??
-                      const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    height: 26 / 18,
+                    color: tokens.textPrimary,
+                  ),
                   quill.HorizontalSpacing.zero,
-                  const quill.VerticalSpacing(10, 4),
+                  const quill.VerticalSpacing(12, 4),
                   quill.VerticalSpacing.zero,
                   null,
                 ),
                 lists: quill.DefaultListBlockStyle(
-                  theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16),
+                  body,
                   quill.HorizontalSpacing.zero,
                   const quill.VerticalSpacing(4, 4),
                   quill.VerticalSpacing.zero,
@@ -252,28 +263,29 @@ class _QuillViewerState extends State<QuillViewer> {
                   null,
                 ),
                 quote: quill.DefaultTextBlockStyle(
-                  theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.textTheme.bodyLarge?.color?.withValues(
-                      alpha: 0.7,
-                    ),
-                  ) ?? const TextStyle(fontSize: 14),
+                  body.copyWith(color: tokens.textSecondary),
                   quill.HorizontalSpacing.zero,
                   const quill.VerticalSpacing(8, 8),
                   quill.VerticalSpacing.zero,
-                  null,
+                  BoxDecoration(
+                    border: Border(
+                      left: BorderSide(color: tokens.inkWash, width: 4),
+                    ),
+                  ),
                 ),
                 code: quill.DefaultTextBlockStyle(
                   TextStyle(
                     fontFamily: 'monospace',
                     fontSize: 14,
-                    color: isDark ? Colors.green[300] : Colors.green[800],
+                    height: 22 / 14,
+                    color: tokens.textPrimary,
                   ),
                   quill.HorizontalSpacing.zero,
                   const quill.VerticalSpacing(8, 8),
                   quill.VerticalSpacing.zero,
                   BoxDecoration(
-                    color: isDark ? Colors.grey[800] : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(4),
+                    color: tokens.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(tokens.radiusMedium),
                   ),
                 ),
                 sizeSmall: const TextStyle(fontSize: 12),

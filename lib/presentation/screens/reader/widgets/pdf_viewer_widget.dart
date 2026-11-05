@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:strawhut/app/neumorphic_tokens.dart';
+import 'package:strawhut/presentation/widgets/glass_surface.dart';
+import 'package:strawhut/presentation/widgets/loading_indicator.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 /// PDF 查看器组件
@@ -52,6 +55,7 @@ class _PdfViewerWidgetState extends State<PdfViewerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = NeumorphicTokens.ofContext(context);
     if (_errorMessage != null) {
       return Center(
         child: Padding(
@@ -62,13 +66,17 @@ class _PdfViewerWidgetState extends State<PdfViewerWidget> {
               Icon(
                 Icons.error_outline,
                 size: 48,
-                color: Theme.of(context).colorScheme.error,
+                color: tokens.error,
               ),
               const SizedBox(height: 12),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 20 / 14,
+                  color: tokens.textPrimary,
+                ),
               ),
             ],
           ),
@@ -103,42 +111,42 @@ class _PdfViewerWidgetState extends State<PdfViewerWidget> {
 
         // 加载指示器
         if (_isLoading)
-          const Center(
+          Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('正在加载 PDF...'),
+                const StrawLoadingIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  '正在加载 PDF...',
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 20 / 14,
+                    fontWeight: FontWeight.w700,
+                    color: tokens.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
 
-        // 页码指示器
+        // 页码指示器（浮动玻璃胶囊）
         if (!_isLoading && _totalPages > 0)
           Positioned(
             bottom: 16,
             right: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface.withValues(
-                  alpha: 0.9,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
+            child: GlassSurface(
+              strong: true,
+              borderRadius: BorderRadius.circular(999),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               child: Text(
                 '$_currentPage / $_totalPages',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 16 / 12,
+                  fontWeight: FontWeight.w700,
+                  color: tokens.textPrimary,
+                ),
               ),
             ),
           ),

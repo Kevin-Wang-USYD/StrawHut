@@ -68,13 +68,13 @@ class _KeyDisplayState extends State<KeyDisplay> {
               NeumorphicIcon(
                 StrawIcons.check,
                 size: 20,
-                color: tokens.surface,
+                color: tokens.inversePrimary,
               ),
               const SizedBox(width: 8),
               const Flexible(child: Text('密钥已复制到剪贴板')),
             ],
           ),
-          backgroundColor: tokens.success,
+          backgroundColor: tokens.inverseSurface,
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -94,10 +94,10 @@ class _KeyDisplayState extends State<KeyDisplay> {
   ///
   /// 布局结构：
   /// - Column 布局
-  ///   - Text（提示文本："密钥（请妥善保存）"）
-  ///   - NeumorphicContainer（凹槽，包含 SelectableText 显示密钥）
-  ///   - NeumorphicButton（复制按钮）
-  ///   - NeumorphicContainer（凹槽 + 警告色，安全提示）
+  ///   - Text（提示文本："密钥（请妥善保存）"，标签 w700）
+  ///   - NeumorphicContainer（surfaceContainerHighest 等宽字块，包含 SelectableText 显示密钥）
+  ///   - NeumorphicButton（色调复制按钮，复制后变为填充态）
+  ///   - NeumorphicContainer（色调警示块，安全提示）
   @override
   Widget build(BuildContext context) {
     final tokens = NeumorphicTokens.ofContext(context);
@@ -110,24 +110,27 @@ class _KeyDisplayState extends State<KeyDisplay> {
         Text(
           '密钥（请妥善保存）：',
           style: TextStyle(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             fontSize: 14,
+            height: 20 / 14,
             color: tokens.textPrimary,
           ),
         ),
         SizedBox(height: tokens.spaceSm),
 
-        // 密钥字符串显示区域（凹陷软槽）
+        // 密钥字符串显示区域（surfaceContainerHighest 等宽字块）
         NeumorphicContainer(
-          shape: NeumorphicShape.flat,
-          borderRadius: tokens.radiusSmall,
-          padding: const EdgeInsets.all(12),
+          shape: NeumorphicShape.concave,
+          color: tokens.surfaceContainerHighest,
+          borderRadius: tokens.radiusMedium,
+          padding: EdgeInsets.all(tokens.spaceMd),
           child: SelectableText(
             widget.keyBase64,
             // 使用等宽字体显示密钥，便于用户准确识别每个字符
             style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 12,
+              height: 1.6,
               letterSpacing: 0.5,
               color: tokens.textPrimary,
             ),
@@ -135,7 +138,7 @@ class _KeyDisplayState extends State<KeyDisplay> {
         ),
         SizedBox(height: tokens.spaceMd),
 
-        // 复制按钮（软质凸起）
+        // 复制按钮（色调药丸；复制成功后变为填充态）
         NeumorphicButton(
           label: _isCopied ? '已复制' : '复制到剪贴板',
           icon: _isCopied ? StrawIcons.check : StrawIcons.copy,
@@ -147,12 +150,15 @@ class _KeyDisplayState extends State<KeyDisplay> {
         ),
         SizedBox(height: tokens.spaceLg),
 
-        // 安全警告提示（扁平背景，退居次要，避免与输入框争夺视觉焦点）
+        // 安全警告提示（警示色调块，退居次要，避免与密钥争夺视觉焦点）
         NeumorphicContainer(
           shape: NeumorphicShape.flat,
-          color: tokens.surfaceAlt,
-          borderRadius: tokens.radiusSmall,
-          padding: const EdgeInsets.all(12),
+          color: Color.alphaBlend(
+            tokens.warning.withValues(alpha: 0.10),
+            tokens.surfaceAlt,
+          ),
+          borderRadius: tokens.radiusMedium,
+          padding: EdgeInsets.all(tokens.spaceSm + tokens.spaceXs),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -161,7 +167,7 @@ class _KeyDisplayState extends State<KeyDisplay> {
                 size: 20,
                 color: tokens.warning,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: tokens.spaceSm),
               Expanded(
                 child: Text(
                   '请妥善保管此密钥，丢失后无法恢复。\n'
@@ -169,7 +175,7 @@ class _KeyDisplayState extends State<KeyDisplay> {
                   style: TextStyle(
                     color: tokens.warning,
                     fontSize: 12,
-                    height: 1.4,
+                    height: 1.5,
                   ),
                 ),
               ),

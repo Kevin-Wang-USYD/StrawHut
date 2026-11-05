@@ -172,6 +172,22 @@ void navigateToReader(WidgetTester tester, String filePath) {
   appRouter.go('/reader?path=$filePath');
 }
 
+
+/// 等待由 widget 代码（运行在测试的 fake-async zone 中）发起的真实文件 I/O 完成
+///
+/// TempFileManager.deleteTempFile 的 `exists()` / `delete()` 是真实 I/O，
+/// 但其后续回调要在 fake-async zone 被 pump 时才会继续执行。只在 runAsync
+/// 中等待真实时间而不 pump，删除会停在中途，结果取决于时序（曾导致偶发失败）。
+/// 因此交替进行：真实等待一小段时间 → pump，直到 [done] 为真或超时（约 1 秒）。
+Future<void> settleFileIo(WidgetTester tester, bool Function() done) async {
+  for (var i = 0; i < 20 && !done(); i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+  }
+}
+
 void main() {
   // 注册 mocktail 的 fallback 值
   setUpAll(() {
@@ -518,6 +534,29 @@ void main() {
 
       expect(find.byType(AlertDialog), findsNothing);
     });
+
+    // 回归测试：取消解密对话框后，未解密页面曾没有任何入口重新打开对话框，
+    // 用户只能退出页面再进来。
+    testWidgets('取消后可通过页面上的"解密"按钮重新打开对话框', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        createRouterTestableApp(container: container),
+      );
+
+      navigateToReader(tester, '/test/straw.straw');
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsOneWidget);
+
+      await tester.tap(find.text('取消'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(find.byType(MetaPreview), findsOneWidget);
+
+      final reopen = find.widgetWithText(NeumorphicButton, '解密');
+      expect(reopen, findsOneWidget);
+      await tester.tap(reopen);
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsOneWidget);
+    });
   });
 
   // ========================================================================
@@ -832,6 +871,199 @@ void main() {
       expect(File(outputPath!).existsSync(), isFalse);
       expect(find.text('streamed plain text'), findsOneWidget);
       PathProviderPlatform.instance = previousPathProvider;
+    });
+
+    // 回归测试：载荷不是合法 UTF-8 时，build 中的 utf8.decode 曾抛出
+    // FormatException，整个内容区变成 Flutter 错误页。
+    testWidgets('invalid UTF-8 text is shown with replacement chars, not an error', (
+      WidgetTester tester,
+    ) async {
+      String? outputPath;
+      final previousPathProvider = PathProviderPlatform.instance;
+
+      when(
+        () => mockCryptoService.decryptStream(
+          strawFilePath: any(named: 'strawFilePath'),
+          key: any(named: 'key'),
+          targetPath: any(named: 'targetPath'),
+          chunkSize: any(named: 'chunkSize'),
+          originalPayloadSize: any(named: 'originalPayloadSize'),
+          onProgress: any(named: 'onProgress'),
+          cancellationToken: any(named: 'cancellationToken'),
+          useV21Security: any(named: 'useV21Security'),
+          integritySink: any(named: 'integritySink'),
+        ),
+      ).thenAnswer((invocation) async {
+        outputPath = invocation.namedArguments[#targetPath] as String;
+        // 'hi' + 非法 UTF-8 字节 0xFF
+        File(outputPath!).writeAsBytesSync([0x68, 0x69, 0xFF]);
+        return DecryptStreamResult(
+          payloadMetadata: const PayloadMetadata(
+            sourceType: SourceType.rawFile,
+            originalExtension: 'txt',
+          ),
+          targetPath: outputPath!,
+        );
+      });
+      when(
+        () => mockIntegrityService.createIntegritySink(
+          strawFileForHash: any(named: 'strawFileForHash'),
+          hmacKey: any(named: 'hmacKey'),
+        ),
+      ).thenReturn(FakeIntegritySink('sha256:testhash'));
+      when(() => mockCryptoService.clearSensitiveData()).thenReturn(null);
+
+      await tester.pumpWidget(createRouterTestableApp(container: container));
+      navigateToReader(tester, '/test/invalid-utf8.straw');
+      await tester.pumpAndSettle();
+
+      final decryptSheet = find.byType(BottomSheet);
+      expect(decryptSheet, findsOneWidget);
+      PathProviderPlatform.instance = FakePathProviderPlatform();
+      final tempDirectory = await tester.runAsync(
+        TempFileManager.getTempDirectory,
+      );
+      expect(tempDirectory, isNotEmpty);
+      await tester.enterText(
+        find.descendant(
+          of: decryptSheet,
+          matching: find.byType(TextField),
+        ),
+        base64Encode(Uint8List(32)),
+      );
+      await tester.pump();
+      final decryptButton = find.descendant(
+        of: decryptSheet,
+        matching: find.widgetWithText(NeumorphicButton, '解密'),
+      );
+      expect(
+        tester.widget<NeumorphicButton>(decryptButton).onPressed,
+        isNotNull,
+      );
+      await tester.tap(decryptButton);
+      await tester.pump();
+      // Neumorphic 解密按钮加载态：文字变为"解密中..."而非 CircularProgressIndicator
+      expect(find.textContaining('解密中'), findsOneWidget);
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 500)),
+      );
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.text('hi\uFFFD').evaluate().isNotEmpty) break;
+      }
+      await tester.runAsync(
+        () async {
+          for (var i = 0; i < 20 && File(outputPath!).existsSync(); i++) {
+            await Future<void>.delayed(const Duration(milliseconds: 50));
+          }
+        },
+      );
+      await tester.pump();
+
+      expect(outputPath, isNotNull);
+      expect(find.textContaining('读取解密内容失败'), findsNothing);
+      expect(tester.takeException(), isNull);
+      expect(File(outputPath!).existsSync(), isFalse);
+      expect(find.text('hi\uFFFD'), findsOneWidget);
+      PathProviderPlatform.instance = previousPathProvider;
+    });
+
+    // 回归测试：inactive（通知栏、多任务、窗口失焦、系统保存对话框）不应
+    // 删除正在展示的解密文件；真正进入后台（paused）时才删除，并同步回到
+    // 未解密状态，回到前台时重新弹出解密对话框。
+    testWidgets('temp file survives inactive, is discarded on paused', (
+      WidgetTester tester,
+    ) async {
+      String? outputPath;
+      final previousPathProvider = PathProviderPlatform.instance;
+      addTearDown(() => PathProviderPlatform.instance = previousPathProvider);
+
+      when(
+        () => mockCryptoService.decryptStream(
+          strawFilePath: any(named: 'strawFilePath'),
+          key: any(named: 'key'),
+          targetPath: any(named: 'targetPath'),
+          chunkSize: any(named: 'chunkSize'),
+          originalPayloadSize: any(named: 'originalPayloadSize'),
+          onProgress: any(named: 'onProgress'),
+          cancellationToken: any(named: 'cancellationToken'),
+          useV21Security: any(named: 'useV21Security'),
+          integritySink: any(named: 'integritySink'),
+        ),
+      ).thenAnswer((invocation) async {
+        outputPath = invocation.namedArguments[#targetPath] as String;
+        File(outputPath!).writeAsBytesSync([1, 2, 3]);
+        return DecryptStreamResult(
+          payloadMetadata: const PayloadMetadata(
+            sourceType: SourceType.rawFile,
+            originalExtension: 'zip',
+            originalFileName: 'archive.zip',
+          ),
+          targetPath: outputPath!,
+        );
+      });
+      when(
+        () => mockIntegrityService.createIntegritySink(
+          strawFileForHash: any(named: 'strawFileForHash'),
+          hmacKey: any(named: 'hmacKey'),
+        ),
+      ).thenReturn(FakeIntegritySink('sha256:testhash'));
+      when(() => mockCryptoService.clearSensitiveData()).thenReturn(null);
+
+      await tester.pumpWidget(createRouterTestableApp(container: container));
+      navigateToReader(tester, '/test/archive.straw');
+      await tester.pumpAndSettle();
+
+      final decryptSheet = find.byType(BottomSheet);
+      expect(decryptSheet, findsOneWidget);
+      PathProviderPlatform.instance = FakePathProviderPlatform();
+      await tester.runAsync(TempFileManager.getTempDirectory);
+      await tester.enterText(
+        find.descendant(of: decryptSheet, matching: find.byType(TextField)),
+        base64Encode(Uint8List(32)),
+      );
+      await tester.pump();
+      await tester.tap(
+        find.descendant(
+          of: decryptSheet,
+          matching: find.widgetWithText(NeumorphicButton, '解密'),
+        ),
+      );
+      await tester.pump();
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 500)),
+      );
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.byTooltip('保存文件').evaluate().isNotEmpty) break;
+      }
+      expect(find.byTooltip('保存文件'), findsOneWidget);
+      expect(outputPath, isNotNull);
+      expect(File(outputPath!).existsSync(), isTrue);
+
+      // inactive：内容与文件都应保留
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      await tester.pump();
+      // 与 paused 阶段相同的等待方式：若此时会删除，这里足以让删除完成
+      await settleFileIo(tester, () => !File(outputPath!).existsSync());
+      expect(File(outputPath!).existsSync(), isTrue);
+      expect(find.byTooltip('保存文件'), findsOneWidget);
+
+      // paused：删除文件，界面回到未解密状态
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+      await settleFileIo(tester, () => !File(outputPath!).existsSync());
+      expect(File(outputPath!).existsSync(), isFalse);
+      expect(find.byTooltip('保存文件'), findsNothing);
+      expect(find.byType(MetaPreview), findsOneWidget);
+
+      // 回到前台：重新弹出解密对话框
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsOneWidget);
     });
   });
 

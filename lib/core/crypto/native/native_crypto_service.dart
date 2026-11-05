@@ -340,6 +340,17 @@ class NativeCryptoService implements ICryptoService {
       await Future<void>.delayed(Duration.zero);
     }
 
+    // original_payload_size 来自文件头部（解密前不可信）。大于实际解密长度
+    // 时 sublist 会抛出 RangeError（属于 Error，解密对话框的 on Exception
+    // 捕获不到，界面会一直停在加载中），因此在截取前显式校验。
+    if (originalPayloadSize < 0 || originalPayloadSize > payloadBytes.length) {
+      throw CryptoException(
+        '原始载荷大小异常：头部声明 $originalPayloadSize 字节， '
+        '实际解密 ${payloadBytes.length} 字节',
+        code: 'INVALID_FILE_FORMAT',
+      );
+    }
+
     final resultBytes = payloadBytes.length == originalPayloadSize
         ? payloadBytes
         : Uint8List.fromList(payloadBytes.sublist(0, originalPayloadSize));
@@ -531,6 +542,15 @@ class NativeCryptoService implements ICryptoService {
           (headerLenBytes[2] << 16) |
           (headerLenBytes[3] << 24);
 
+      // 长度上限校验：防止恶意文件触发超大内存分配（与 CryptoService 一致）
+      if (headerLength > MAX_HEADER_SIZE_BYTES) {
+        throw CryptoException(
+          'Header Size 超过上限: $headerLength 字节， '
+          '最大允许 $MAX_HEADER_SIZE_BYTES 字节',
+          code: 'INVALID_FILE_FORMAT',
+        );
+      }
+
       // ---- 读取 JSON 头部 ----
       final headerBytes = await raf.read(headerLength);
       if (headerBytes.length < headerLength) {
@@ -550,6 +570,15 @@ class NativeCryptoService implements ICryptoService {
 
       final contentJson = headerJson['content'] as Map<String, dynamic>;
       final totalChunks = contentJson['total_chunks'] as int;
+
+      // 长度上限校验：防止恶意文件触发超长循环（与 CryptoService 一致）
+      if (totalChunks <= 0 || totalChunks > MAX_TOTAL_CHUNKS_LIMIT) {
+        throw CryptoException(
+          'totalChunks 异常: $totalChunks， '
+          '允许范围为 1..$MAX_TOTAL_CHUNKS_LIMIT',
+          code: 'INVALID_FILE_FORMAT',
+        );
+      }
 
       // ---- 创建目标文件 ----
       final targetFile = File(targetPath);
@@ -577,6 +606,15 @@ class NativeCryptoService implements ICryptoService {
             (chunkHeader[CHUNK_IV_LENGTH_BYTES + 1] << 8) |
             (chunkHeader[CHUNK_IV_LENGTH_BYTES + 2] << 16) |
             (chunkHeader[CHUNK_IV_LENGTH_BYTES + 3] << 24);
+
+        // 长度上限校验：在分配内存前拒绝超大分块（与 CryptoService 一致）
+        if (encDataLen > MAX_CHUNK_CIPHERTEXT_BYTES) {
+          throw CryptoException(
+            '分块 $chunkIndex 密文长度超过上限: $encDataLen 字节， '
+            '最大允许 $MAX_CHUNK_CIPHERTEXT_BYTES 字节',
+            code: 'INVALID_FILE_FORMAT',
+          );
+        }
 
         final encDataBytes = await raf.read(encDataLen);
         if (encDataBytes.length < encDataLen) {

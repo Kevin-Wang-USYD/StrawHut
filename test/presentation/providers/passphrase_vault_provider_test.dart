@@ -24,6 +24,20 @@ void main() {
 
       expect(identical(instance1, instance2), isTrue);
     });
+
+    // 回归测试：autoDispose 时，无人 watch 的 provider 会在读取后被释放，
+    // 下次 ref.read 得到新实例（各自持有独立的互斥锁），并发写可能互相覆盖。
+    test('无人监听时跨事件循环读取仍为同一实例（锁全局生效）', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final instance1 = container.read(passphraseVaultServiceProvider);
+      // 让 autoDispose 有机会生效
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      final instance2 = container.read(passphraseVaultServiceProvider);
+
+      expect(identical(instance1, instance2), isTrue);
+    });
   });
 
   group('passphraseEntriesProvider', () {

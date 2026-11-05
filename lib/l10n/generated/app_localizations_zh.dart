@@ -466,4 +466,58 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fileUploadLabel => '上传文件';
+
+  @override
+  String get wrongKey => '密钥错误或文件已损坏';
+
+  @override
+  String get wrongPassphrase => '暗号错误或文件已损坏';
+
+  @override
+  String get errFileNotFound => '文件不存在或已被移动';
+
+  @override
+  String get errInvalidFileFormat => '文件格式无效或已损坏';
+
+  @override
+  String get errEmptyChunks => '文件不包含加密数据';
+
+  @override
+  String get errMetadataTruncated => '文件元数据不完整，文件可能已损坏';
+
+  @override
+  String get errFirstChunkTooSmall => '文件数据不完整，文件可能已损坏';
+
+  @override
+  String get errInvalidSaltLength => '暗号盐值无效，文件可能已损坏';
+
+  @override
+  String get errDecryptStreamFailed => '解密文件时出错，请重试';
+
+  @override
+  String get errMetadataTooLarge => '文件元数据过大，文件可能已损坏';
+
+  @override
+  String get errChunkSizeTooSmall => '文件分块参数无效，文件可能已损坏';
+
+  @override
+  String get errKeyDerivationFailed => '暗号密钥派生失败，请重试';
+
+  @override
+  String get errInvalidKeyLength => '密钥长度不正确，应为 32 字节';
+
+  @override
+  String get errUnknown => '发生未知错误，请重试';
+
+  @override
+  String get errDecryptGeneric => '解密过程中发生错误，请重试';
+
+  @override
+  String get errKeyRequired => '请输入密钥或上传 .key 文件';
+
+  @override
+  String get errInvalidKeyFormat => '密钥格式不正确，无法解析为有效的 Base64 数据';
+
+  @override
+  String get verifying => '校验中...';
 }

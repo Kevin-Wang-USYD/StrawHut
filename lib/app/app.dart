@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import 'package:strawhut/app/routes.dart';
@@ -115,19 +114,15 @@ class _StrawHutAppState extends ConsumerState<StrawHutApp>
       return;
     }
 
-    // Store file bytes in pendingFileBytesProvider
+    if (!mounted) return;
+
+    // 与 ActionButtons 的打开流程一致：写入待处理字节后跳转，
+    // ReaderScreen 会在加载时读取并自行清除 pendingFileBytesProvider。
     ref.read(pendingFileBytesProvider.notifier).state = (bytes, fileName);
 
-    // Load the file into CurrentCard provider
-    final cardNotifier = ref.read(currentCardProvider.notifier);
-    await cardNotifier.loadFileFromBytes(bytes, fileName: fileName);
-
-    // Navigate to reader screen
-    if (mounted) {
-      context.go('/reader');
-      // Clear pending bytes after navigation
-      ref.read(pendingFileBytesProvider.notifier).state = null;
-    }
+    // 注意：此处的 context 位于 MaterialApp.router 之上，没有 GoRouter，
+    // context.go() 会抛异常，必须直接使用全局 appRouter。
+    appRouter.go('/reader?path=${Uri.encodeComponent(fileName)}');
   }
 
   /// 构建全局字体回退列表

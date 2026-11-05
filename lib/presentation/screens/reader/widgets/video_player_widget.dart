@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:strawhut/app/neumorphic_tokens.dart';
+import 'package:strawhut/presentation/widgets/loading_indicator.dart';
 import 'package:video_player/video_player.dart';
 
 /// 视频播放器组件
@@ -83,6 +85,14 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = NeumorphicTokens.ofContext(context);
+    final timeStyle = TextStyle(
+      fontSize: 12,
+      height: 16 / 12,
+      fontWeight: FontWeight.w700,
+      fontFeatures: const [FontFeature.tabularFigures()],
+      color: tokens.textSecondary,
+    );
     if (_errorMessage != null) {
       return Center(
         child: Padding(
@@ -93,13 +103,17 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
               Icon(
                 Icons.error_outline,
                 size: 48,
-                color: Theme.of(context).colorScheme.error,
+                color: tokens.error,
               ),
               const SizedBox(height: 12),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 20 / 14,
+                  color: tokens.textPrimary,
+                ),
               ),
             ],
           ),
@@ -108,13 +122,21 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     }
 
     if (!_isInitialized) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('正在加载视频...'),
+            const StrawLoadingIndicator(),
+            const SizedBox(height: 16),
+            Text(
+              '正在加载视频...',
+              style: TextStyle(
+                fontSize: 14,
+                height: 20 / 14,
+                fontWeight: FontWeight.w700,
+                color: tokens.textSecondary,
+              ),
+            ),
           ],
         ),
       );
@@ -127,33 +149,37 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           child: Center(
             child: AspectRatio(
               aspectRatio: _controller.value.aspectRatio,
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _controller.value.isPlaying
-                        ? _controller.pause()
-                        : _controller.play();
-                  });
-                },
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    VideoPlayer(_controller),
-                    // 播放/暂停指示器
-                    if (!_controller.value.isPlaying)
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          shape: BoxShape.circle,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(tokens.radiusLarge),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _controller.value.isPlaying
+                          ? _controller.pause()
+                          : _controller.play();
+                    });
+                  },
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      VideoPlayer(_controller),
+                      // 播放/暂停指示器
+                      if (!_controller.value.isPlaying)
+                        Container(
+                          decoration: BoxDecoration(
+                            color:
+                                tokens.inverseSurface.withValues(alpha: 0.72),
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          child: Icon(
+                            Icons.play_arrow,
+                            color: tokens.onInverseSurface,
+                            size: 48,
+                          ),
                         ),
-                        padding: const EdgeInsets.all(16),
-                        child: const Icon(
-                          Icons.play_arrow,
-                          color: Colors.white,
-                          size: 48,
-                        ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -169,12 +195,11 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
               VideoProgressIndicator(
                 _controller,
                 allowScrubbing: true,
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 colors: VideoProgressColors(
-                  playedColor: Theme.of(context).colorScheme.primary,
-                  bufferedColor: Theme.of(context).colorScheme.primary
-                      .withValues(alpha: 0.3),
-                  backgroundColor:
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
+                  playedColor: tokens.inkPrimary,
+                  bufferedColor: tokens.inkPrimary.withValues(alpha: 0.3),
+                  backgroundColor: tokens.surfaceContainerHighest,
                 ),
               ),
               const SizedBox(height: 8),
@@ -197,13 +222,19 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                           : Icons.play_arrow,
                     ),
                     iconSize: 28,
+                    tooltip: _controller.value.isPlaying ? '暂停' : '播放',
+                    style: IconButton.styleFrom(
+                      backgroundColor: tokens.secondaryContainer,
+                      foregroundColor: tokens.onSecondaryContainer,
+                    ),
                   ),
+                  const SizedBox(width: 12),
 
                   // 时间显示
                   Text(
                     '${_formatDuration(_controller.value.position)} / '
                     '${_formatDuration(_controller.value.duration)}',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: timeStyle,
                   ),
 
                   const Spacer(),

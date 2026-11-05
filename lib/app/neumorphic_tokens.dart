@@ -1,15 +1,30 @@
 import 'package:flutter/material.dart';
 
-/// Neumorphism 设计令牌（水墨风）
+/// 设计令牌（Material 3 Expressive · 稻草琥珀色调）
 ///
-/// 集中定义颜色、阴影、圆角、间距等设计常量，供所有软质组件复用。
-/// 通过 [NeumorphicTokens.of] 获取当前亮/暗模式下的令牌。
+/// 集中定义颜色、阴影、圆角、间距等设计常量，供所有组件复用。
+/// 通过 [NeumorphicTokens.of] / [NeumorphicTokens.ofContext] 获取当前亮/暗模式下的令牌。
 ///
-/// 设计原则：
-/// - 元素与背景同色，靠双向阴影定义体积
-/// - 全局光源左上角（亮阴影在左上，暗阴影在右下）
-/// - 强调色采用水墨黑系，低饱和、安静
-/// - 暗色模式阴影色反转
+/// 类名与原有字段名保持不变（兼容旧代码），但字段含义已映射为 M3 色彩角色，
+/// 种子色为琥珀「稻草」色 #7C5800：
+///
+/// | 字段            | M3 角色               |
+/// |-----------------|-----------------------|
+/// | surface         | surface（页面背景）   |
+/// | surfaceAlt      | surfaceContainer      |
+/// | divider         | outlineVariant        |
+/// | textPrimary     | onSurface             |
+/// | textSecondary   | onSurfaceVariant      |
+/// | textHint        | outline               |
+/// | inkPrimary      | primary               |
+/// | inkSecondary    | secondary             |
+/// | inkWash         | primaryContainer      |
+/// | success         | tertiary（绿）        |
+/// | warning         | 琥珀橙                |
+/// | error           | error                 |
+///
+/// 阴影：不再使用 Neumorphism 双向阴影，仅保留一层柔和投影（[darkShadow]），
+/// 克制使用；[lightShadow] 为透明，保留字段只为兼容。
 class NeumorphicTokens {
   const NeumorphicTokens({
     required this.brightness,
@@ -40,61 +55,152 @@ class NeumorphicTokens {
     required this.spaceLg,
     required this.spaceXl,
     required this.spaceXxl,
+    // 以下为新增 M3 色彩角色（可选，默认值取亮色方案）
+    this.onPrimary = const Color(0xFFFFFFFF),
+    this.onPrimaryContainer = const Color(0xFF271900),
+    this.onSecondary = const Color(0xFFFFFFFF),
+    this.secondaryContainer = const Color(0xFFF5E0BB),
+    this.onSecondaryContainer = const Color(0xFF241A04),
+    this.onTertiary = const Color(0xFFFFFFFF),
+    this.tertiaryContainer = const Color(0xFFCCEBC4),
+    this.onTertiaryContainer = const Color(0xFF072109),
+    this.onError = const Color(0xFFFFFFFF),
+    this.errorContainer = const Color(0xFFFFDAD6),
+    this.onErrorContainer = const Color(0xFF410002),
+    this.surfaceDim = const Color(0xFFE2D9CC),
+    this.surfaceBright = const Color(0xFFFFF8F2),
+    this.surfaceContainerLowest = const Color(0xFFFFFFFF),
+    this.surfaceContainerLow = const Color(0xFFFCF2E7),
+    this.surfaceContainerHigh = const Color(0xFFF0E7DB),
+    this.surfaceContainerHighest = const Color(0xFFEAE1D6),
+    this.inverseSurface = const Color(0xFF353027),
+    this.onInverseSurface = const Color(0xFFF9EFE3),
+    this.inversePrimary = const Color(0xFFF9BC48),
   });
 
   final Brightness brightness;
 
   // ============ 背景与表面 ============
-  /// 主背景基色（元素与之同色形成 Neumorphism 效果）
+  /// M3 surface：页面背景
   final Color surface;
 
-  /// 表面微差色（凹陷态/分隔提示，仅比 surface 深一点点）
+  /// M3 surfaceContainer：卡片、分区的默认色调容器
   final Color surfaceAlt;
 
-  /// 分隔线色（比 surfaceAlt 更重，用于 Divider 等需要明确分界的场景）
+  /// M3 outlineVariant：分隔线、弱描边
   final Color divider;
 
+  /// M3 surfaceDim：最暗的表面（滚动遮挡等）
+  final Color surfaceDim;
+
+  /// M3 surfaceBright：最亮的表面
+  final Color surfaceBright;
+
+  /// M3 surfaceContainerLowest：最低层级容器
+  final Color surfaceContainerLowest;
+
+  /// M3 surfaceContainerLow：凸起卡片（convex）
+  final Color surfaceContainerLow;
+
+  /// M3 surfaceContainerHigh：对话框、玻璃回退底色
+  final Color surfaceContainerHigh;
+
+  /// M3 surfaceContainerHighest：凹陷/输入区（concave）、进度条轨道
+  final Color surfaceContainerHighest;
+
+  /// M3 inverseSurface：SnackBar、Tooltip 背景
+  final Color inverseSurface;
+
+  /// M3 onInverseSurface：反色表面上的文字
+  final Color onInverseSurface;
+
   // ============ 文字 ============
+  /// M3 onSurface：主要文字
   final Color textPrimary;
+
+  /// M3 onSurfaceVariant：次要文字、默认图标
   final Color textSecondary;
+
+  /// M3 outline：提示文字、输入框描边
   final Color textHint;
 
-  // ============ 强调色（水墨风） ============
-  /// 浓墨：用于主 CTA、激活态、关键图标
+  // ============ 强调色 ============
+  /// M3 primary：主 CTA、激活态、关键图标
   final Color inkPrimary;
 
-  /// 淡墨：用于次级强调、hover 边描
+  /// M3 onPrimary：primary 之上的文字/图标
+  final Color onPrimary;
+
+  /// M3 secondary：次级强调
   final Color inkSecondary;
 
-  /// 水墨晕染：用于进度条、选中态背景
+  /// M3 onSecondary：secondary 之上的文字/图标
+  final Color onSecondary;
+
+  /// M3 primaryContainer：首页主卡片、选中态背景
   final Color inkWash;
 
-  // ============ 语义色（低饱和，符合安静氛围） ============
+  /// M3 onPrimaryContainer：primaryContainer 之上的文字/图标
+  final Color onPrimaryContainer;
+
+  /// M3 secondaryContainer：色调按钮、选中的标签
+  final Color secondaryContainer;
+
+  /// M3 onSecondaryContainer：secondaryContainer 之上的文字/图标
+  final Color onSecondaryContainer;
+
+  /// M3 inversePrimary：反色表面上的强调色（SnackBar 操作）
+  final Color inversePrimary;
+
+  // ============ 语义色 ============
+  /// M3 tertiary（绿）：成功
   final Color success;
+
+  /// M3 onTertiary：tertiary 之上的文字/图标
+  final Color onTertiary;
+
+  /// M3 tertiaryContainer：成功提示、首页色调操作卡
+  final Color tertiaryContainer;
+
+  /// M3 onTertiaryContainer：tertiaryContainer 之上的文字/图标
+  final Color onTertiaryContainer;
+
+  /// 警告（琥珀橙）
   final Color warning;
+
+  /// M3 error：错误
   final Color error;
 
+  /// M3 onError：error 之上的文字/图标
+  final Color onError;
+
+  /// M3 errorContainer：错误横幅、危险按钮背景
+  final Color errorContainer;
+
+  /// M3 onErrorContainer：errorContainer 之上的文字/图标
+  final Color onErrorContainer;
+
   // ============ 阴影 ============
-  /// 亮阴影色（光源色，左上方向）
+  /// 兼容字段：新设计不再使用亮阴影，恒为透明
   final Color lightShadow;
 
-  /// 暗阴影色（背光色，右下方向）
+  /// 柔和投影色（单层，克制使用）
   final Color darkShadow;
 
-  /// 阴影偏移量（亮阴影取负值即左上，暗阴影取正值即右下）
+  /// 投影纵向偏移量
   final double shadowOffset;
 
-  /// 阴影模糊半径
+  /// 投影模糊半径
   final double shadowBlur;
 
-  /// 阴影扩散
+  /// 投影扩散
   final double shadowSpread;
 
   // ============ 圆角 ============
-  final double radiusSmall;   // 8
-  final double radiusMedium;  // 12
-  final double radiusLarge;   // 16
-  final double radiusXLarge;  // 24
+  final double radiusSmall;   // 12
+  final double radiusMedium;  // 16
+  final double radiusLarge;   // 28
+  final double radiusXLarge;  // 36
 
   // ============ 间距 ============
   final double spaceXs;  // 4
@@ -105,73 +211,107 @@ class NeumorphicTokens {
   final double spaceXxl; // 48
 
   /// 亮色模式令牌
-  ///
-  /// 背景 #E8E8E8 中性浅灰，与水墨黑形成柔和对比。
-  /// 阴影：亮=近白，暗=中灰，光源左上。
   static const NeumorphicTokens light = NeumorphicTokens(
     brightness: Brightness.light,
-    surface: Color(0xFFE8E8E8),
-    surfaceAlt: Color(0xFFDCDCDC),
-    divider: Color(0xFFBEBEBE),
-    textPrimary: Color(0xFF2A2A2A),
-    textSecondary: Color(0xFF5C5C5C),
-    textHint: Color(0xFF9A9A9A),
-    inkPrimary: Color(0xFF1C1C1E),
-    inkSecondary: Color(0xFF3A3A3C),
-    inkWash: Color(0xFF6A6A6C),
-    success: Color(0xFF4A7C59),
-    warning: Color(0xFFB8860B),
-    error: Color(0xFFA04040),
-    lightShadow: Color(0xFFFFFFFF),
-    darkShadow: Color(0xFFBEBEBE),
-    shadowOffset: 4,
+    surface: Color(0xFFFFF8F2),
+    surfaceAlt: Color(0xFFF6ECE1),
+    divider: Color(0xFFD2C5B4),
+    textPrimary: Color(0xFF1F1B13),
+    textSecondary: Color(0xFF4E4639),
+    textHint: Color(0xFF807667),
+    inkPrimary: Color(0xFF7C5800),
+    inkSecondary: Color(0xFF6B5D3F),
+    inkWash: Color(0xFFFFDEA6),
+    success: Color(0xFF4A6547),
+    warning: Color(0xFF8A5100),
+    error: Color(0xFFBA1A1A),
+    lightShadow: Color(0x00000000),
+    darkShadow: Color(0x241F1B13), // #1F1B13 @ 14%
+    shadowOffset: 2,
     shadowBlur: 8,
     shadowSpread: 0,
-    radiusSmall: 8,
-    radiusMedium: 12,
-    radiusLarge: 16,
-    radiusXLarge: 24,
+    radiusSmall: 12,
+    radiusMedium: 16,
+    radiusLarge: 28,
+    radiusXLarge: 36,
     spaceXs: 4,
     spaceSm: 8,
     spaceMd: 16,
     spaceLg: 24,
     spaceXl: 32,
     spaceXxl: 48,
+    onPrimary: Color(0xFFFFFFFF),
+    onPrimaryContainer: Color(0xFF271900),
+    onSecondary: Color(0xFFFFFFFF),
+    secondaryContainer: Color(0xFFF5E0BB),
+    onSecondaryContainer: Color(0xFF241A04),
+    onTertiary: Color(0xFFFFFFFF),
+    tertiaryContainer: Color(0xFFCCEBC4),
+    onTertiaryContainer: Color(0xFF072109),
+    onError: Color(0xFFFFFFFF),
+    errorContainer: Color(0xFFFFDAD6),
+    onErrorContainer: Color(0xFF410002),
+    surfaceDim: Color(0xFFE2D9CC),
+    surfaceBright: Color(0xFFFFF8F2),
+    surfaceContainerLowest: Color(0xFFFFFFFF),
+    surfaceContainerLow: Color(0xFFFCF2E7),
+    surfaceContainerHigh: Color(0xFFF0E7DB),
+    surfaceContainerHighest: Color(0xFFEAE1D6),
+    inverseSurface: Color(0xFF353027),
+    onInverseSurface: Color(0xFFF9EFE3),
+    inversePrimary: Color(0xFFF9BC48),
   );
 
   /// 暗色模式令牌
-  ///
-  /// 背景 #2C2C2C 中性深灰，阴影色反转。
-  /// 水墨黑在暗色下需提亮为浅墨以保证可读性。
   static const NeumorphicTokens dark = NeumorphicTokens(
     brightness: Brightness.dark,
-    surface: Color(0xFF2C2C2C),
-    surfaceAlt: Color(0xFF333333),
-    divider: Color(0xFF4A4A4A),
-    textPrimary: Color(0xFFE8E8E8),
-    textSecondary: Color(0xFFB0B0B0),
-    textHint: Color(0xFF7A7A7A),
-    inkPrimary: Color(0xFFE8E8E8),   // 暗色下墨色反转，"浓墨"变为高亮
-    inkSecondary: Color(0xFFC0C0C0),
-    inkWash: Color(0xFF8A8A8A),
-    success: Color(0xFF6FA67E),
-    warning: Color(0xFFD4A04A),
-    error: Color(0xFFC86060),
-    lightShadow: Color(0xFF3A3A3A),  // 暗色下"亮阴影"为稍亮的灰
-    darkShadow: Color(0xFF1A1A1A),  // 暗色下"暗阴影"为更深的黑
-    shadowOffset: 4,
+    surface: Color(0xFF17130B),
+    surfaceAlt: Color(0xFF231F17),
+    divider: Color(0xFF4E4639),
+    textPrimary: Color(0xFFEAE1D4),
+    textSecondary: Color(0xFFD2C5B4),
+    textHint: Color(0xFF9B8F80),
+    inkPrimary: Color(0xFFF9BC48),
+    inkSecondary: Color(0xFFD8C4A0),
+    inkWash: Color(0xFF5E4200),
+    success: Color(0xFFB0CFAA),
+    warning: Color(0xFFFFB870),
+    error: Color(0xFFFFB4AB),
+    lightShadow: Color(0x00000000),
+    darkShadow: Color(0x66000000), // black @ 40%
+    shadowOffset: 2,
     shadowBlur: 8,
     shadowSpread: 0,
-    radiusSmall: 8,
-    radiusMedium: 12,
-    radiusLarge: 16,
-    radiusXLarge: 24,
+    radiusSmall: 12,
+    radiusMedium: 16,
+    radiusLarge: 28,
+    radiusXLarge: 36,
     spaceXs: 4,
     spaceSm: 8,
     spaceMd: 16,
     spaceLg: 24,
     spaceXl: 32,
     spaceXxl: 48,
+    onPrimary: Color(0xFF422C00),
+    onPrimaryContainer: Color(0xFFFFDEA6),
+    onSecondary: Color(0xFF3A2F15),
+    secondaryContainer: Color(0xFF52452A),
+    onSecondaryContainer: Color(0xFFF5E0BB),
+    onTertiary: Color(0xFF1D361C),
+    tertiaryContainer: Color(0xFF334D31),
+    onTertiaryContainer: Color(0xFFCCEBC4),
+    onError: Color(0xFF690005),
+    errorContainer: Color(0xFF93000A),
+    onErrorContainer: Color(0xFFFFDAD6),
+    surfaceDim: Color(0xFF17130B),
+    surfaceBright: Color(0xFF3E382F),
+    surfaceContainerLowest: Color(0xFF120E07),
+    surfaceContainerLow: Color(0xFF1F1B13),
+    surfaceContainerHigh: Color(0xFF2E2921),
+    surfaceContainerHighest: Color(0xFF39342B),
+    inverseSurface: Color(0xFFEAE1D4),
+    onInverseSurface: Color(0xFF353027),
+    inversePrimary: Color(0xFF7C5800),
   );
 
   /// 根据亮度获取对应令牌
@@ -183,21 +323,39 @@ class NeumorphicTokens {
   static NeumorphicTokens ofContext(BuildContext context) {
     return of(Theme.of(context).brightness);
   }
+
+  /// M3 surfaceContainer（与 [surfaceAlt] 相同，语义化别名）
+  Color get surfaceContainer => surfaceAlt;
+
+  /// M3 primaryContainer（与 [inkWash] 相同，语义化别名）
+  Color get primaryContainer => inkWash;
+
+  /// M3 outline（与 [textHint] 相同，语义化别名）
+  Color get outline => textHint;
+
+  /// M3 outlineVariant（与 [divider] 相同，语义化别名）
+  Color get outlineVariant => divider;
+
+  /// 单层柔和投影（卡片/凸起容器使用）
+  List<BoxShadow> get softShadow => buildNeumorphicShadows(
+        tokens: this,
+        shape: NeumorphicShape.convex,
+      );
 }
 
-/// 软质容器形态
+/// 容器形态（沿用旧名，含义映射为 M3 色调层级）
 enum NeumorphicShape {
-  /// 凸起（默认）：双向外阴影
+  /// 凸起（默认）：surfaceContainerLow + 单层柔和投影
   convex,
 
-  /// 凹陷（按下态/输入框）：反向阴影模拟内壁
+  /// 凹陷（输入区/拖拽区/选中槽）：surfaceContainerHighest，无投影
   concave,
 
-  /// 平整：仅背景色，无阴影
+  /// 平整：surfaceContainer，无投影
   flat,
 }
 
-/// 阴影强度（用于 hover/pressed 等状态微调）
+/// 投影强度（用于 hover/pressed 等状态微调）
 enum NeumorphicIntensity {
   /// 标准
   normal,
@@ -205,138 +363,42 @@ enum NeumorphicIntensity {
   /// 加深（hover）
   strong,
 
-  /// 减弱（移动端小屏，避免显脏）
+  /// 减弱（移动端小屏）
   subtle,
 }
 
-/// 根据令牌与形态构建 BoxDecoration
+/// 根据令牌与形态构建投影
 ///
-/// 凸起：亮阴影左上 + 暗阴影右下（外阴影）
-/// 凹陷：暗阴影左上 + 亮阴影右下（反向，模拟内壁暗影）
-/// 平整：无阴影
-///
-/// 注意：Flutter 的 BoxShadow 不支持真正的 inset，
-/// 凹陷态采用"四向外阴影 + 背景色加深"的成熟模拟方案，
-/// 四向偏移确保四边均有阴影定义，避免两侧与背景相融，
-/// 视觉效果接近 inset 且稳定无渲染问题。
+/// 新设计只保留一层柔和投影：
+/// - 凸起：单层 [NeumorphicTokens.darkShadow] 向下投影，[intensity] 缩放偏移与模糊
+/// - 凹陷 / 平整：无投影（靠色调层级区分）
 List<BoxShadow> buildNeumorphicShadows({
   required NeumorphicTokens tokens,
   required NeumorphicShape shape,
   NeumorphicIntensity intensity = NeumorphicIntensity.normal,
 }) {
-  if (shape == NeumorphicShape.flat) {
+  if (shape != NeumorphicShape.convex) {
     return const [];
   }
 
-  // 根据强度调整阴影参数
   var offset = tokens.shadowOffset;
   var blur = tokens.shadowBlur;
   switch (intensity) {
     case NeumorphicIntensity.strong:
-      offset = tokens.shadowOffset * 1.3;
-      blur = tokens.shadowBlur * 1.4;
+      offset = tokens.shadowOffset * 2;
+      blur = tokens.shadowBlur * 1.75;
     case NeumorphicIntensity.subtle:
-      offset = tokens.shadowOffset * 0.6;
-      blur = tokens.shadowBlur * 0.7;
+      offset = tokens.shadowOffset * 0.5;
+      blur = tokens.shadowBlur * 0.6;
     case NeumorphicIntensity.normal:
       break;
   }
 
-  final lightOffset = Offset(-offset, -offset);
-  final darkOffset = Offset(offset, offset);
-
-  if (shape == NeumorphicShape.convex) {
-    // 凸起：四向阴影，亮在左上，暗在右下
-    // 对角线阴影提供立体感，轴向阴影补强四边边界
-    return [
-      // 对角线：亮（左上）
-      BoxShadow(
-        color: tokens.lightShadow,
-        offset: lightOffset,
-        blurRadius: blur,
-        spreadRadius: tokens.shadowSpread,
-      ),
-      // 对角线：暗（右下）
-      BoxShadow(
-        color: tokens.darkShadow,
-        offset: darkOffset,
-        blurRadius: blur,
-        spreadRadius: tokens.shadowSpread,
-      ),
-      // 轴向补强：上边亮影
-      BoxShadow(
-        color: tokens.lightShadow,
-        offset: Offset(0, -offset * 0.5),
-        blurRadius: blur * 0.7,
-        spreadRadius: tokens.shadowSpread,
-      ),
-      // 轴向补强：左边亮影
-      BoxShadow(
-        color: tokens.lightShadow,
-        offset: Offset(-offset * 0.5, 0),
-        blurRadius: blur * 0.7,
-        spreadRadius: tokens.shadowSpread,
-      ),
-      // 轴向补强：下边暗影
-      BoxShadow(
-        color: tokens.darkShadow,
-        offset: Offset(0, offset * 0.5),
-        blurRadius: blur * 0.7,
-        spreadRadius: tokens.shadowSpread,
-      ),
-      // 轴向补强：右边暗影
-      BoxShadow(
-        color: tokens.darkShadow,
-        offset: Offset(offset * 0.5, 0),
-        blurRadius: blur * 0.7,
-        spreadRadius: tokens.shadowSpread,
-      ),
-    ];
-  }
-
-  // 凹陷：四向阴影模拟内壁，暗在左上，亮在右下
-  // 对角线阴影提供凹陷立体感，轴向阴影补强确保两侧边界清晰
   return [
-    // 对角线：暗（左上）
     BoxShadow(
       color: tokens.darkShadow,
-      offset: lightOffset,
-      blurRadius: blur * 0.8,
-      spreadRadius: tokens.shadowSpread,
-    ),
-    // 对角线：亮（右下）
-    BoxShadow(
-      color: tokens.lightShadow,
-      offset: darkOffset,
-      blurRadius: blur * 0.8,
-      spreadRadius: tokens.shadowSpread,
-    ),
-    // 轴向补强：上边暗影（背光面）
-    BoxShadow(
-      color: tokens.darkShadow,
-      offset: Offset(0, -offset * 0.5),
-      blurRadius: blur * 0.6,
-      spreadRadius: tokens.shadowSpread,
-    ),
-    // 轴向补强：左边暗影（背光面）
-    BoxShadow(
-      color: tokens.darkShadow,
-      offset: Offset(-offset * 0.5, 0),
-      blurRadius: blur * 0.6,
-      spreadRadius: tokens.shadowSpread,
-    ),
-    // 轴向补强：下边亮影（受光面）
-    BoxShadow(
-      color: tokens.lightShadow,
-      offset: Offset(0, offset * 0.5),
-      blurRadius: blur * 0.6,
-      spreadRadius: tokens.shadowSpread,
-    ),
-    // 轴向补强：右边亮影（受光面）
-    BoxShadow(
-      color: tokens.lightShadow,
-      offset: Offset(offset * 0.5, 0),
-      blurRadius: blur * 0.6,
+      offset: Offset(0, offset),
+      blurRadius: blur,
       spreadRadius: tokens.shadowSpread,
     ),
   ];

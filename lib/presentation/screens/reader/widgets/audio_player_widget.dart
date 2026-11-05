@@ -1,5 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:strawhut/app/neumorphic_tokens.dart';
+import 'package:strawhut/presentation/widgets/neumorphic_container.dart';
 
 /// 音频播放器组件
 ///
@@ -102,6 +104,14 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = NeumorphicTokens.ofContext(context);
+    final timeStyle = TextStyle(
+      fontSize: 12,
+      height: 16 / 12,
+      fontWeight: FontWeight.w700,
+      fontFeatures: const [FontFeature.tabularFigures()],
+      color: tokens.textSecondary,
+    );
     if (_errorMessage != null) {
       return Center(
         child: Padding(
@@ -112,13 +122,17 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
               Icon(
                 Icons.error_outline,
                 size: 48,
-                color: Theme.of(context).colorScheme.error,
+                color: tokens.error,
               ),
               const SizedBox(height: 12),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 20 / 14,
+                  color: tokens.textPrimary,
+                ),
               ),
             ],
           ),
@@ -129,18 +143,31 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600),
-        child: Card(
+        // 色调卡片（surfaceContainerLow，圆角 28）
+        child: NeumorphicContainer(
+          shape: NeumorphicShape.flat,
+          color: tokens.surfaceContainerLow,
+          borderRadius: tokens.radiusLarge,
           margin: const EdgeInsets.all(24),
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 音频图标
-                Icon(
-                  Icons.audio_file_outlined,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.primary,
+                // 音频图标（primaryContainer 圆形徽章）
+                NeumorphicContainer(
+                  shape: NeumorphicShape.flat,
+                  color: tokens.inkWash,
+                  borderRadius: 48,
+                  width: 96,
+                  height: 96,
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.zero,
+                  child: Icon(
+                    Icons.audio_file_outlined,
+                    size: 48,
+                    color: tokens.onPrimaryContainer,
+                  ),
                 ),
                 const SizedBox(height: 24),
 
@@ -165,11 +192,11 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                   children: [
                     Text(
                       _formatDuration(_position),
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: timeStyle,
                     ),
                     Text(
                       _formatDuration(_duration),
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: timeStyle,
                     ),
                   ],
                 ),
@@ -191,7 +218,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         );
                       },
                       icon: const Icon(Icons.replay_10),
-                      iconSize: 32,
+                      iconSize: 28,
+                      color: tokens.textSecondary,
                       tooltip: '后退 10 秒',
                     ),
                     const SizedBox(width: 16),
@@ -206,7 +234,12 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         }
                       },
                       icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-                      iconSize: 40,
+                      iconSize: 36,
+                      style: IconButton.styleFrom(
+                        backgroundColor: tokens.inkPrimary,
+                        foregroundColor: tokens.onPrimary,
+                        minimumSize: const Size(64, 64),
+                      ),
                       tooltip: _isPlaying ? '暂停' : '播放',
                     ),
                     const SizedBox(width: 16),
@@ -221,7 +254,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         );
                       },
                       icon: const Icon(Icons.forward_10),
-                      iconSize: 32,
+                      iconSize: 28,
+                      color: tokens.textSecondary,
                       tooltip: '前进 10 秒',
                     ),
                   ],

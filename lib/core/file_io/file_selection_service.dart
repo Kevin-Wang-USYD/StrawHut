@@ -161,19 +161,36 @@ class FileSelectionService {
     required Uint8List bytes,
     required String fileType, // 'straw', 'png', or 'key'
   }) async {
+    // 文件名可能来自解密载荷中的 originalFileName（不可信数据），
+    // 必须去掉目录部分，防止 `../` 写到目标目录之外。
+    final safeName = sanitizeFileName(fileName);
     if (isAndroid) {
       return _saveFileAndroid(
-        fileName: fileName,
+        fileName: safeName,
         bytes: bytes,
         fileType: fileType,
       );
     } else {
       return _saveFileDesktop(
-        fileName: fileName,
+        fileName: safeName,
         content: bytes,
         fileType: fileType,
       );
     }
+  }
+
+  /// 仅保留文件名的最后一段（同时按 `/` 和 `\` 切分），并去除控制字符
+  ///
+  /// 结果为空、`.` 或 `..` 时返回 'untitled'。
+  @visibleForTesting
+  static String sanitizeFileName(String fileName) {
+    final base = fileName
+        .split(RegExp(r'[/\\]'))
+        .last
+        .replaceAll(RegExp(r'[\x00-\x1F]'), '')
+        .trim();
+    if (base.isEmpty || base == '.' || base == '..') return 'untitled';
+    return base;
   }
 
   /// Save a file on Android using MediaStore.
@@ -376,7 +393,7 @@ class FileSelectionService {
     // Fallback to path-based reading
     if (file.path != null) {
       try {
-        return File(file.path!).readAsBytes();
+        return await File(file.path!).readAsBytes();
       } on Object {
         debugPrint(
             'FileSelectionService: Failed to read file at path: ${file.path}',);
