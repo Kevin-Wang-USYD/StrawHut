@@ -6,9 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:strawhut/app/neumorphic_tokens.dart';
 import 'package:strawhut/core/errors/file_exception.dart';
 import 'package:strawhut/data/models/key_file.dart';
+import 'package:strawhut/presentation/dialogs/decrypt_dialog/widgets/error_shake.dart';
 import 'package:strawhut/presentation/providers/crypto_provider.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_button.dart';
-import 'package:strawhut/presentation/widgets/neumorphic_container.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_icon.dart';
 
 /// 解密对话框 - 密钥文件上传组件
@@ -174,14 +174,15 @@ class _KeyFileUploadState extends ConsumerState<KeyFileUpload> {
         Text(
           '方式 B：上传 .key 密钥文件',
           style: TextStyle(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             fontSize: 14,
+            height: 20 / 14,
             color: tokens.textPrimary,
           ),
         ),
         SizedBox(height: tokens.spaceSm),
 
-        // 上传按钮区域
+        // 上传按钮区域（tonal 药丸按钮）
         NeumorphicButton(
           label: _isLoading ? '正在读取...' : '选择 .key 文件',
           icon: StrawIcons.uploadFile,
@@ -189,63 +190,45 @@ class _KeyFileUploadState extends ConsumerState<KeyFileUpload> {
           onPressed: _isLoading ? null : _handleFileUpload,
         ),
 
-        // 成功状态显示
+        // 成功状态显示（tertiaryContainer 绿色调）
         if (_loadedFileName != null && _errorMessage == null) ...[
           SizedBox(height: tokens.spaceSm),
-          NeumorphicContainer(
-            shape: NeumorphicShape.flat,
-            borderRadius: tokens.radiusSmall,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                NeumorphicIcon(
-                  StrawIcons.check,
-                  size: 20,
-                  color: tokens.success,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '已加载密钥文件：$_loadedFileName',
-                    style: TextStyle(
-                      color: tokens.success,
-                      fontSize: 13,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: tokens.tertiaryContainer,
+              borderRadius: BorderRadius.circular(tokens.radiusMedium),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  NeumorphicIcon(
+                    StrawIcons.check,
+                    size: 20,
+                    color: tokens.onTertiaryContainer,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '已加载密钥文件：$_loadedFileName',
+                      style: TextStyle(
+                        color: tokens.onTertiaryContainer,
+                        fontSize: 14,
+                        height: 20 / 14,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
 
-        // 错误信息显示
+        // 错误信息显示（errorContainer + error 色文字，出现时抖动一次）
         if (_errorMessage != null) ...[
           SizedBox(height: tokens.spaceSm),
-          NeumorphicContainer(
-            shape: NeumorphicShape.flat,
-            borderRadius: tokens.radiusSmall,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                NeumorphicIcon(
-                  StrawIcons.error,
-                  size: 20,
-                  color: tokens.error,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(
-                      color: tokens.error,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          DecryptErrorMessage(message: _errorMessage!, iconSize: 20),
         ],
       ],
     );

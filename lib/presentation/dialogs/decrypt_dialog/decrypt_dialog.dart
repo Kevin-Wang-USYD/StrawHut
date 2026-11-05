@@ -19,12 +19,15 @@ import 'package:strawhut/data/models/integrity_info.dart';
 import 'package:strawhut/data/models/parsed_straw_file.dart';
 import 'package:strawhut/data/models/straw_file.dart';
 import 'package:strawhut/l10n/l10n.dart';
+import 'package:strawhut/presentation/dialogs/decrypt_dialog/widgets/error_shake.dart';
 import 'package:strawhut/presentation/dialogs/decrypt_dialog/widgets/key_file_upload.dart';
 import 'package:strawhut/presentation/dialogs/decrypt_dialog/widgets/key_input.dart';
 import 'package:strawhut/presentation/dialogs/decrypt_dialog/widgets/passphrase_decrypt_input.dart';
 import 'package:strawhut/presentation/dialogs/passphrase_vault_dialog/add_passphrase_dialog.dart';
 import 'package:strawhut/presentation/providers/crypto_provider.dart';
 import 'package:strawhut/presentation/providers/passphrase_vault_provider.dart';
+import 'package:strawhut/presentation/widgets/glass_surface.dart';
+import 'package:strawhut/presentation/widgets/loading_indicator.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_button.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_container.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_icon.dart';
@@ -169,8 +172,11 @@ class DecryptDialog extends ConsumerStatefulWidget {
         isDismissible: false,
         enableDrag: false,
         useSafeArea: true,
+        // 面板本体由 _DecryptDialogMobile 内的 GlassSurface 绘制
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
         builder: (context) => DraggableScrollableSheet(
           expand: false,
@@ -776,39 +782,26 @@ class _DecryptDialogState extends ConsumerState<DecryptDialog> {
         if (!didPop && _isLoading) _handleCancel();
       },
       child: Dialog(
-        backgroundColor: tokens.surface,
+        // 容器由 GlassSurface 绘制（液态玻璃浮层，32 圆角）
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+          borderRadius: BorderRadius.circular(_kDecryptGlassRadius),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
-          child: Padding(
+          child: GlassSurface(
+            strong: true,
+            borderRadius: BorderRadius.circular(_kDecryptGlassRadius),
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // 标题
-                Row(
-                  children: [
-                    NeumorphicIcon(
-                      StrawIcons.unlock,
-                      size: 22,
-                      color: tokens.inkPrimary,
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        l10n.decrypt,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: tokens.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                _DecryptHeader(title: l10n.decrypt),
                 SizedBox(height: tokens.spaceMd),
                 Flexible(
                   child: SingleChildScrollView(
@@ -851,7 +844,8 @@ class _DecryptDialogState extends ConsumerState<DecryptDialog> {
                               title: Text(
                                 l10n.saveAfterDecrypt,
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 14,
+                                  height: 20 / 14,
                                   color: tokens.textSecondary,
                                 ),
                               ),
@@ -859,7 +853,11 @@ class _DecryptDialogState extends ConsumerState<DecryptDialog> {
                               controlAffinity: ListTileControlAffinity.leading,
                               dense: true,
                               activeColor: tokens.inkPrimary,
-                              checkColor: tokens.surface,
+                              checkColor: tokens.onPrimary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(tokens.radiusSmall),
+                              ),
                             ),
                           ],
                         ] else ...[
@@ -878,39 +876,17 @@ class _DecryptDialogState extends ConsumerState<DecryptDialog> {
                         // ========== 错误提示 ==========
                         if (_errorMessage != null) ...[
                           SizedBox(height: tokens.spaceSm + tokens.spaceXs),
-                          NeumorphicContainer(
-                            shape: NeumorphicShape.flat,
-                            borderRadius: tokens.radiusSmall,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                NeumorphicIcon(
-                                  StrawIcons.error,
-                                  size: 18,
-                                  color: tokens.error,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    _errorMessage!,
-                                    style: TextStyle(
-                                      color: tokens.error,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          DecryptErrorMessage(message: _errorMessage!),
                         ],
                       ],
                     ),
                   ),
                 ),
+                // ========== 解密进度（表现力加载指示器） ==========
+                if (_isLoading) ...[
+                  SizedBox(height: tokens.spaceMd),
+                  _DecryptProgressStrip(progress: _decryptProgress),
+                ],
                 SizedBox(height: tokens.spaceMd),
                 // 操作按钮
                 Row(
@@ -932,6 +908,7 @@ class _DecryptDialogState extends ConsumerState<DecryptDialog> {
                           : l10n.decrypt,
                       style: NeumorphicButtonStyle.primary,
                       icon: _isLoading ? null : StrawIcons.unlock,
+                      busy: _isLoading,
                       onPressed: _isLoading ? null : _handleDecrypt,
                     ),
                   ],
@@ -949,137 +926,9 @@ class _DecryptDialogState extends ConsumerState<DecryptDialog> {
   /// 展示 .straw 文件的公开元数据，帮助用户确认要解密的文件是否正确。
   /// 展示内容包括：标题、发布者、发布日期、描述、标签、匿名标识。
   Widget _buildMetaPreview(CardMeta meta) {
-    final tokens = NeumorphicTokens.ofContext(context);
-    return NeumorphicContainer(
-      shape: NeumorphicShape.flat,
-      borderRadius: tokens.radiusSmall,
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 标题
-          Text(
-            meta.title,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: tokens.textPrimary,
-            ),
-          ),
-          SizedBox(height: tokens.spaceSm),
-
-          // 发布者信息行
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              // 匿名标识
-              if (meta.isAnonymous)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: tokens.warning.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    '匿名',
-                    style: TextStyle(
-                      color: tokens.warning,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              // 发布者代号
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  NeumorphicIcon(
-                    StrawIcons.globe,
-                    size: 16,
-                    color: tokens.textSecondary,
-                  ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      meta.publisherAlias,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: tokens.textSecondary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              // 发布日期
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  NeumorphicIcon(
-                    StrawIcons.document,
-                    size: 14,
-                    color: tokens.textSecondary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _formatDate(meta.publishDate),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: tokens.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          // 描述（如果有）
-          if (meta.description != null && meta.description!.isNotEmpty) ...[
-            SizedBox(height: tokens.spaceSm),
-            Text(
-              meta.description!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 13,
-                color: tokens.textSecondary,
-              ),
-            ),
-          ],
-
-          // 标签列表
-          if (meta.tags.isNotEmpty) ...[
-            SizedBox(height: tokens.spaceSm),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: meta.tags.map((tag) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: tokens.inkWash.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    tag,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: tokens.inkSecondary,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        ],
-      ),
+    return _DecryptMetaPreview(
+      meta: meta,
+      formattedDate: _formatDate(meta.publishDate),
     );
   }
 
@@ -1638,46 +1487,32 @@ class _DecryptDialogMobileState extends ConsumerState<_DecryptDialogMobile> {
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop && _isLoading) _handleCancel();
       },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      // 底部面板容器：液态玻璃（strong），仅顶部 32 圆角
+      child: GlassSurface(
+        strong: true,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(_kDecryptGlassRadius),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Drag handle indicator
+            // Drag handle indicator（M3：onSurfaceVariant 40%）
             Center(
               child: Container(
-                width: 40,
+                width: 32,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
+                margin: const EdgeInsets.only(top: 8, bottom: 16),
                 decoration: BoxDecoration(
-                  color: tokens.surfaceAlt,
+                  color: tokens.textSecondary.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             // 标题
-            Row(
-              children: [
-                NeumorphicIcon(
-                  StrawIcons.unlock,
-                  size: 22,
-                  color: tokens.inkPrimary,
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    l10n.decrypt,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: tokens.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: tokens.spaceSm + tokens.spaceXs),
+            _DecryptHeader(title: l10n.decrypt),
+            SizedBox(height: tokens.spaceMd),
             // Scrollable content
             Flexible(
               child: SingleChildScrollView(
@@ -1719,7 +1554,8 @@ class _DecryptDialogMobileState extends ConsumerState<_DecryptDialogMobile> {
                           title: Text(
                             l10n.saveAfterDecrypt,
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 14,
+                              height: 20 / 14,
                               color: tokens.textSecondary,
                             ),
                           ),
@@ -1727,7 +1563,11 @@ class _DecryptDialogMobileState extends ConsumerState<_DecryptDialogMobile> {
                           controlAffinity: ListTileControlAffinity.leading,
                           dense: true,
                           activeColor: tokens.inkPrimary,
-                          checkColor: tokens.surface,
+                          checkColor: tokens.onPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(tokens.radiusSmall),
+                          ),
                         ),
                       ],
                     ] else ...[
@@ -1739,40 +1579,18 @@ class _DecryptDialogMobileState extends ConsumerState<_DecryptDialogMobile> {
                     // Error message
                     if (_errorMessage != null) ...[
                       SizedBox(height: tokens.spaceSm + tokens.spaceXs),
-                      NeumorphicContainer(
-                        shape: NeumorphicShape.flat,
-                        borderRadius: tokens.radiusSmall,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            NeumorphicIcon(
-                              StrawIcons.error,
-                              size: 18,
-                              color: tokens.error,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _errorMessage!,
-                                style: TextStyle(
-                                  color: tokens.error,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      DecryptErrorMessage(message: _errorMessage!),
                     ],
                     SizedBox(height: tokens.spaceMd),
                   ],
                 ),
               ),
             ),
+            // 解密进度（表现力加载指示器）
+            if (_isLoading) ...[
+              _DecryptProgressStrip(progress: _decryptProgress),
+              SizedBox(height: tokens.spaceSm + tokens.spaceXs),
+            ],
             // Fixed bottom action bar
             Padding(
               padding: EdgeInsets.only(
@@ -1799,6 +1617,7 @@ class _DecryptDialogMobileState extends ConsumerState<_DecryptDialogMobile> {
                         : l10n.decrypt,
                     style: NeumorphicButtonStyle.primary,
                     icon: _isLoading ? null : StrawIcons.unlock,
+                    busy: _isLoading,
                     onPressed: _isLoading ? null : _handleDecrypt,
                   ),
                 ],
@@ -1811,47 +1630,165 @@ class _DecryptDialogMobileState extends ConsumerState<_DecryptDialogMobile> {
   }
 
   Widget _buildMetaPreview(CardMeta meta) {
+    return _DecryptMetaPreview(
+      meta: meta,
+      formattedDate: _formatDate(meta.publishDate),
+    );
+  }
+
+  String _formatDate(String isoDate) {
+    try {
+      final dateTime = DateTime.parse(isoDate).toLocal();
+      return '${dateTime.year}-'
+          '${dateTime.month.toString().padLeft(2, '0')}-'
+          '${dateTime.day.toString().padLeft(2, '0')}';
+    } on Exception {
+      return isoDate;
+    }
+  }
+}
+
+/// 解密对话框 / 底部面板的玻璃容器圆角
+const double _kDecryptGlassRadius = 32;
+
+/// 标题行：tonal 圆形图标（primaryContainer）+ titleLarge w700 标题
+class _DecryptHeader extends StatelessWidget {
+  const _DecryptHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = NeumorphicTokens.ofContext(context);
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: tokens.primaryContainer,
+            shape: BoxShape.circle,
+          ),
+          child: NeumorphicIcon(
+            StrawIcons.unlock,
+            size: 22,
+            color: tokens.onPrimaryContainer,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 22,
+              height: 28 / 22,
+              fontWeight: FontWeight.w700,
+              color: tokens.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 解密进度条：表现力形变加载指示器 + 6px 圆角线性进度
+///
+/// 进度文字/百分比仍由「解密」按钮标签展示，这里只负责视觉反馈。
+/// 线性进度始终为确定值（0 时为空轨道），因此减少动态效果下不会循环动画；
+/// 加载指示器在减少动态效果下自身保持静止。
+class _DecryptProgressStrip extends StatelessWidget {
+  const _DecryptProgressStrip({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = NeumorphicTokens.ofContext(context);
+    return Row(
+      children: [
+        const StrawLoadingIndicator(size: 32),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: progress.clamp(0.0, 1.0),
+              minHeight: 6,
+              color: tokens.inkPrimary,
+              backgroundColor: tokens.surfaceContainerHighest,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 卡片元数据预览：tonal surfaceContainerLow 卡片（28 圆角）
+///
+/// 展示标题、匿名标识、发布者、发布日期、描述与标签 chips（10 圆角）。
+class _DecryptMetaPreview extends StatelessWidget {
+  const _DecryptMetaPreview({
+    required this.meta,
+    required this.formattedDate,
+  });
+
+  final CardMeta meta;
+  final String formattedDate;
+
+  @override
+  Widget build(BuildContext context) {
     final tokens = NeumorphicTokens.ofContext(context);
     return NeumorphicContainer(
       shape: NeumorphicShape.flat,
-      borderRadius: tokens.radiusSmall,
-      padding: const EdgeInsets.all(12),
+      color: tokens.surfaceContainerLow,
+      borderRadius: tokens.radiusLarge,
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 标题
           Text(
             meta.title,
             style: TextStyle(
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
               fontSize: 16,
+              height: 24 / 16,
               color: tokens.textPrimary,
             ),
           ),
           SizedBox(height: tokens.spaceSm),
+
+          // 发布者信息行
           Wrap(
             spacing: 8,
             runSpacing: 4,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              // 匿名标识
               if (meta.isAnonymous)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
+                    horizontal: 8,
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: tokens.warning.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4),
+                    color: tokens.warning.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     '匿名',
                     style: TextStyle(
                       color: tokens.warning,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      height: 16 / 12,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
+              // 发布者代号
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1865,13 +1802,14 @@ class _DecryptDialogMobileState extends ConsumerState<_DecryptDialogMobile> {
                     child: Text(
                       meta.publisherAlias,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         color: tokens.textSecondary,
                       ),
                     ),
                   ),
                 ],
               ),
+              // 发布日期
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1882,7 +1820,7 @@ class _DecryptDialogMobileState extends ConsumerState<_DecryptDialogMobile> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    _formatDate(meta.publishDate),
+                    formattedDate,
                     style: TextStyle(
                       fontSize: 12,
                       color: tokens.textSecondary,
@@ -1892,6 +1830,8 @@ class _DecryptDialogMobileState extends ConsumerState<_DecryptDialogMobile> {
               ),
             ],
           ),
+
+          // 描述（如果有）
           if (meta.description != null && meta.description!.isNotEmpty) ...[
             SizedBox(height: tokens.spaceSm),
             Text(
@@ -1899,31 +1839,36 @@ class _DecryptDialogMobileState extends ConsumerState<_DecryptDialogMobile> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 14,
+                height: 20 / 14,
                 color: tokens.textSecondary,
               ),
             ),
           ],
+
+          // 标签列表
           if (meta.tags.isNotEmpty) ...[
             SizedBox(height: tokens.spaceSm),
             Wrap(
               spacing: 6,
-              runSpacing: 4,
+              runSpacing: 6,
               children: meta.tags.map((tag) {
                 return Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
+                    horizontal: 10,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: tokens.inkWash.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(12),
+                    color: tokens.secondaryContainer,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     tag,
                     style: TextStyle(
-                      fontSize: 11,
-                      color: tokens.inkSecondary,
+                      fontSize: 12,
+                      height: 16 / 12,
+                      fontWeight: FontWeight.w700,
+                      color: tokens.onSecondaryContainer,
                     ),
                   ),
                 );
@@ -1933,16 +1878,5 @@ class _DecryptDialogMobileState extends ConsumerState<_DecryptDialogMobile> {
         ],
       ),
     );
-  }
-
-  String _formatDate(String isoDate) {
-    try {
-      final dateTime = DateTime.parse(isoDate).toLocal();
-      return '${dateTime.year}-'
-          '${dateTime.month.toString().padLeft(2, '0')}-'
-          '${dateTime.day.toString().padLeft(2, '0')}';
-    } on Exception {
-      return isoDate;
-    }
   }
 }
