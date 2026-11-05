@@ -21,7 +21,7 @@ import 'package:strawhut/presentation/widgets/neumorphic_icon.dart';
 /// - 发布者代号
 /// - 发布日期（格式化显示）
 /// - 描述文本
-/// - 标签列表（软质胶囊样式）
+/// - 标签列表（圆角 10 色调胶囊）
 /// - 匿名标识（如果是匿名模式）
 /// - 加密算法标识
 ///
@@ -67,90 +67,76 @@ class MetaPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = NeumorphicTokens.ofContext(context);
+    // 色调卡片（surfaceContainer，圆角 28，无双向阴影）
     return NeumorphicContainer(
-      intensity: NeumorphicIntensity.subtle,
+      shape: NeumorphicShape.flat,
       borderRadius: tokens.radiusLarge,
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ========== 卡片标题（大字号） ==========
+          // ========== 卡片标题（表现力大标题） ==========
           Text(
             meta.title,
             style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
+              fontSize: 28,
+              height: 36 / 28,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
               color: tokens.textPrimary,
-              height: 1.3,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
-          // ========== 发布者信息和发布日期 ==========
-          Row(
+          // ========== 元数据胶囊：匿名 / 发布者 / 发布日期 ==========
+          // OverflowBar：一行放得下时横排，否则逐个换行纵排（窄屏 / 大字号
+          // 下避免 RenderFlex 溢出；不使用 Wrap，无标签时页面中不出现 Wrap）
+          OverflowBar(
+            spacing: 8,
+            overflowSpacing: 8,
+            alignment: MainAxisAlignment.start,
+            overflowAlignment: OverflowBarAlignment.start,
             children: [
-              // 匿名标识（软质凹陷胶囊）
-              if (meta.isAnonymous) ...[
-                _buildAnonymousTag(tokens),
-                const SizedBox(width: 8),
-              ],
+              // 匿名标识
+              if (meta.isAnonymous) _buildAnonymousTag(tokens),
               // 发布者代号
-              NeumorphicIcon(
-                StrawIcons.person,
-                size: 18,
-                color: tokens.textSecondary,
+              _buildMetaChip(
+                tokens,
+                icon: StrawIcons.person,
+                iconSize: 16,
+                label: meta.publisherAlias,
               ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  meta.publisherAlias,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: tokens.textSecondary,
-                  ),
-                ),
-              ),
-              const Spacer(),
               // 发布日期
-              NeumorphicIcon(
-                StrawIcons.calendar,
-                size: 16,
-                color: tokens.textSecondary,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                _formatDate(meta.publishDate),
-                style: TextStyle(
-                  fontSize: 13,
-                  color: tokens.textSecondary,
-                ),
+              _buildMetaChip(
+                tokens,
+                icon: StrawIcons.calendar,
+                iconSize: 14,
+                label: _formatDate(meta.publishDate),
               ),
             ],
           ),
 
           // ========== 描述文本 ==========
           if (meta.description != null && meta.description!.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Divider(height: 1, color: tokens.divider),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
               meta.description!,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 16,
+                height: 24 / 16,
                 color: tokens.textSecondary,
-                height: 1.6,
               ),
             ),
           ],
 
-          // ========== 标签列表（软质胶囊） ==========
+          // ========== 标签列表（圆角 10 色调胶囊） ==========
           if (meta.tags.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Divider(height: 1, color: tokens.divider),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -159,23 +145,26 @@ class MetaPreview extends StatelessWidget {
           ],
 
           // ========== 加密算法标识 ==========
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Divider(height: 1, color: tokens.divider),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             children: [
               NeumorphicIcon(
                 StrawIcons.lock,
                 size: 16,
-                color: tokens.textSecondary,
+                color: tokens.inkPrimary,
               ),
-              const SizedBox(width: 6),
-              Text(
-                '加密算法：${strawFile.content.encryptionAlgorithm}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: tokens.textHint,
-                  fontWeight: FontWeight.w500,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  '加密算法：${strawFile.content.encryptionAlgorithm}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 16 / 12,
+                    color: tokens.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
@@ -185,15 +174,56 @@ class MetaPreview extends StatelessWidget {
     );
   }
 
-  /// 构建匿名标识软质胶囊
+  /// 构建元数据胶囊（圆角 10，outlineVariant 描边，透明底）
+  Widget _buildMetaChip(
+    NeumorphicTokens tokens, {
+    required String icon,
+    required double iconSize,
+    required String label,
+  }) {
+    return NeumorphicContainer(
+      shape: NeumorphicShape.flat,
+      color: Colors.transparent,
+      borderRadius: 10,
+      border: Border.all(color: tokens.divider),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          NeumorphicIcon(
+            icon,
+            size: iconSize,
+            color: tokens.textSecondary,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                height: 20 / 14,
+                fontWeight: FontWeight.w700,
+                color: tokens.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 构建匿名标识胶囊
   ///
-  /// 使用凹陷态容器 + 水墨警告色，避免 Material 3 默认的橙色高饱和。
+  /// 圆角 10、警示色描边与文字，透明底。
   Widget _buildAnonymousTag(NeumorphicTokens tokens) {
     return NeumorphicContainer(
       shape: NeumorphicShape.flat,
-      intensity: NeumorphicIntensity.subtle,
-      borderRadius: 6,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      color: Colors.transparent,
+      borderRadius: 10,
+      border: Border.all(color: tokens.warning),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -207,8 +237,9 @@ class MetaPreview extends StatelessWidget {
             '匿名',
             style: TextStyle(
               color: tokens.warning,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              height: 20 / 14,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -216,19 +247,22 @@ class MetaPreview extends StatelessWidget {
     );
   }
 
-  /// 构建标签软质胶囊
+  /// 构建标签胶囊
   ///
-  /// 凸起小胶囊，表面同背景色，靠双向阴影定义体积。
+  /// 圆角 10，secondaryContainer 底、onSecondaryContainer 字。
   Widget _buildTag(NeumorphicTokens tokens, String tag) {
     return NeumorphicContainer(
-      intensity: NeumorphicIntensity.subtle,
-      borderRadius: tokens.radiusSmall,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      shape: NeumorphicShape.flat,
+      color: tokens.secondaryContainer,
+      borderRadius: 10,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Text(
         tag,
         style: TextStyle(
-          fontSize: 12,
-          color: tokens.textSecondary,
+          fontSize: 14,
+          height: 20 / 14,
+          fontWeight: FontWeight.w700,
+          color: tokens.onSecondaryContainer,
         ),
       ),
     );

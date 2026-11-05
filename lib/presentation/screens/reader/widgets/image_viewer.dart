@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:strawhut/app/neumorphic_tokens.dart';
 
 /// 图片内容查看器组件
 ///
@@ -28,35 +29,44 @@ class ImageViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = NeumorphicTokens.ofContext(context);
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 800),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(tokens.radiusLarge),
         child: Image.memory(
           imageBytes,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {
             return Container(
               padding: const EdgeInsets.all(24),
+              color: tokens.surfaceContainerHighest,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     Icons.broken_image_outlined,
                     size: 64,
-                    color: Theme.of(context).colorScheme.error,
+                    color: tokens.error,
                   ),
                   const SizedBox(height: 12),
                   Text(
                     '图片加载失败',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 24 / 16,
+                      fontWeight: FontWeight.w700,
+                      color: tokens.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '图片数据可能已损坏或格式不受支持',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 16 / 12,
+                      color: tokens.textSecondary,
+                    ),
                   ),
                 ],
               ),
