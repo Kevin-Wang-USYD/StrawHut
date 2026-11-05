@@ -72,12 +72,15 @@ class QuillEditorState extends ConsumerState<QuillEditor> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final tokens = NeumorphicTokens.ofContext(context);
 
     return Container(
-      // 编辑器容器：带背景色和内边距
+      // 编辑器表面：surfaceContainerLow + 28 大圆角，与工具栏同宽悬浮
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: isDark ? Colors.grey[850] : Colors.white,
+        color: tokens.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(tokens.radiusLarge),
       ),
       child: quill.QuillEditor.basic(
         controller: widget.controller,
@@ -93,7 +96,7 @@ class QuillEditorState extends ConsumerState<QuillEditor> {
           // 占位符提示文本
           placeholder: '开始编写你的知识卡片...',
           // 内容样式配置
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           // 显示光标
           showCursor: true,
           // 最大内容宽度（可选，用于限制阅读宽度）
@@ -101,98 +104,7 @@ class QuillEditorState extends ConsumerState<QuillEditor> {
           // 最小高度
           minHeight: 400,
           // 自定义样式
-          customStyles: quill.DefaultStyles(
-            paragraph: quill.DefaultTextBlockStyle(
-              theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16),
-              const quill.HorizontalSpacing(0, 0),
-              const quill.VerticalSpacing(8, 8),
-              const quill.VerticalSpacing(0, 0),
-              null,
-            ),
-            h1: quill.DefaultTextBlockStyle(
-              theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 28,
-                  ) ??
-                  const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              const quill.HorizontalSpacing(0, 0),
-              const quill.VerticalSpacing(16, 8),
-              const quill.VerticalSpacing(0, 0),
-              null,
-            ),
-            h2: quill.DefaultTextBlockStyle(
-              theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 22,
-                  ) ??
-                  const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              const quill.HorizontalSpacing(0, 0),
-              const quill.VerticalSpacing(12, 6),
-              const quill.VerticalSpacing(0, 0),
-              null,
-            ),
-            h3: quill.DefaultTextBlockStyle(
-              theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 18,
-                  ) ??
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              const quill.HorizontalSpacing(0, 0),
-              const quill.VerticalSpacing(10, 4),
-              const quill.VerticalSpacing(0, 0),
-              null,
-            ),
-            lists: quill.DefaultListBlockStyle(
-              theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16),
-              const quill.HorizontalSpacing(0, 0),
-              const quill.VerticalSpacing(4, 4),
-              const quill.VerticalSpacing(0, 0),
-              null,
-              null,
-            ),
-            quote: quill.DefaultTextBlockStyle(
-              theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.textTheme.bodyLarge?.color?.withOpacity(0.7),
-                  ) ??
-                  const TextStyle(fontSize: 14),
-              const quill.HorizontalSpacing(0, 0),
-              const quill.VerticalSpacing(8, 8),
-              const quill.VerticalSpacing(0, 0),
-              null,
-            ),
-            code: quill.DefaultTextBlockStyle(
-              TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 14,
-                color: isDark ? Colors.green[300] : Colors.green[800],
-              ),
-              const quill.HorizontalSpacing(0, 0),
-              const quill.VerticalSpacing(8, 8),
-              const quill.VerticalSpacing(0, 0),
-              BoxDecoration(
-                color: isDark ? Colors.grey[800] : Colors.grey[100],
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            sizeSmall: const TextStyle(fontSize: 12),
-            sizeLarge: const TextStyle(fontSize: 18),
-            sizeHuge: const TextStyle(fontSize: 24),
-            // 斜体使用等宽字体，避免斜体字形向右倾斜超出边界侵入后续字符
-            // 默认字体的斜体是算法倾斜，字形会向右超出原字符边界；
-            // 等宽字体（如 Consolas）有独立的斜体字形，倾斜后不超界。
-            italic: TextStyle(
-              fontStyle: FontStyle.italic,
-              fontFamily: 'Consolas',
-              fontFamilyFallback: const [
-                'Courier New',
-                'Menlo',
-                'Monaco',
-                'Droid Sans Mono',
-                'monospace',
-              ],
-              height: 1.2,
-            ),
-          ),
+          customStyles: buildStrawQuillStyles(context),
         ),
       ),
     );
@@ -259,7 +171,7 @@ class QuillEditorState extends ConsumerState<QuillEditor> {
 /// 水平分隔线 embed 构建器
 ///
 /// 为 flutter_quill 编辑器注册 'hr' 类型的 embed 渲染器，
-/// 将 BlockEmbed('hr', '') 渲染为水墨风格的水平分隔线。
+/// 将 BlockEmbed('hr', '') 渲染为 outlineVariant 色的水平分隔线。
 /// 若不注册，插入分隔线后编辑器找不到对应 builder 会导致渲染异常。
 class HorizontalRuleEmbedBuilder extends quill.EmbedBuilder {
   const HorizontalRuleEmbedBuilder();
@@ -274,11 +186,135 @@ class HorizontalRuleEmbedBuilder extends quill.EmbedBuilder {
   Widget build(BuildContext context, quill.EmbedContext embedContext) {
     final tokens = NeumorphicTokens.ofContext(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Divider(
         thickness: 1,
-        color: tokens.divider,
+        color: tokens.outlineVariant,
       ),
     );
   }
+}
+
+/// StrawHut 富文本样式（编辑器与预览共用）
+///
+/// 遵循 M3 Expressive 字体层级：标题 w800/w700、正文 16/24 w400，
+/// 颜色全部取自 [NeumorphicTokens]，亮/暗模式自动适配。
+quill.DefaultStyles buildStrawQuillStyles(BuildContext context) {
+  final theme = Theme.of(context);
+  final tokens = NeumorphicTokens.ofContext(context);
+  final body = (theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16))
+      .copyWith(
+    fontSize: 16,
+    height: 24 / 16,
+    fontWeight: FontWeight.w400,
+    color: tokens.textPrimary,
+  );
+
+  return quill.DefaultStyles(
+    paragraph: quill.DefaultTextBlockStyle(
+      body,
+      quill.HorizontalSpacing.zero,
+      const quill.VerticalSpacing(8, 8),
+      quill.VerticalSpacing.zero,
+      null,
+    ),
+    h1: quill.DefaultTextBlockStyle(
+      (theme.textTheme.headlineMedium ?? const TextStyle()).copyWith(
+        fontSize: 28,
+        height: 36 / 28,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.5,
+        color: tokens.textPrimary,
+      ),
+      quill.HorizontalSpacing.zero,
+      const quill.VerticalSpacing(16, 8),
+      quill.VerticalSpacing.zero,
+      null,
+    ),
+    h2: quill.DefaultTextBlockStyle(
+      (theme.textTheme.titleLarge ?? const TextStyle()).copyWith(
+        fontSize: 22,
+        height: 28 / 22,
+        fontWeight: FontWeight.w700,
+        color: tokens.textPrimary,
+      ),
+      quill.HorizontalSpacing.zero,
+      const quill.VerticalSpacing(12, 6),
+      quill.VerticalSpacing.zero,
+      null,
+    ),
+    h3: quill.DefaultTextBlockStyle(
+      (theme.textTheme.titleMedium ?? const TextStyle()).copyWith(
+        fontSize: 18,
+        height: 24 / 18,
+        fontWeight: FontWeight.w700,
+        color: tokens.textPrimary,
+      ),
+      quill.HorizontalSpacing.zero,
+      const quill.VerticalSpacing(10, 4),
+      quill.VerticalSpacing.zero,
+      null,
+    ),
+    lists: quill.DefaultListBlockStyle(
+      body,
+      quill.HorizontalSpacing.zero,
+      const quill.VerticalSpacing(4, 4),
+      quill.VerticalSpacing.zero,
+      null,
+      null,
+    ),
+    quote: quill.DefaultTextBlockStyle(
+      body.copyWith(color: tokens.textSecondary),
+      quill.HorizontalSpacing.zero,
+      const quill.VerticalSpacing(8, 8),
+      quill.VerticalSpacing.zero,
+      // 引用块：左侧 4px primaryContainer 竖条
+      BoxDecoration(
+        border: Border(
+          left: BorderSide(color: tokens.primaryContainer, width: 4),
+        ),
+      ),
+    ),
+    code: quill.DefaultTextBlockStyle(
+      TextStyle(
+        fontFamily: 'monospace',
+        fontSize: 14,
+        height: 20 / 14,
+        color: tokens.textPrimary,
+      ),
+      quill.HorizontalSpacing.zero,
+      const quill.VerticalSpacing(8, 8),
+      quill.VerticalSpacing.zero,
+      BoxDecoration(
+        color: tokens.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(tokens.radiusSmall),
+      ),
+    ),
+    placeHolder: quill.DefaultTextBlockStyle(
+      // 占位符用 onSurfaceVariant，保证 ≥ 4.5:1 对比度
+      body.copyWith(color: tokens.textSecondary),
+      quill.HorizontalSpacing.zero,
+      quill.VerticalSpacing.zero,
+      quill.VerticalSpacing.zero,
+      null,
+    ),
+    sizeSmall: const TextStyle(fontSize: 12),
+    sizeLarge: const TextStyle(fontSize: 18),
+    sizeHuge: const TextStyle(fontSize: 24),
+    // 斜体使用等宽字体，避免斜体字形向右倾斜超出边界侵入后续字符
+    // 默认字体的斜体是算法倾斜，字形会向右超出原字符边界；
+    // 等宽字体（如 Consolas）有独立的斜体字形，倾斜后不超界。
+    italic: const TextStyle(
+      fontStyle: FontStyle.italic,
+      fontFamily: 'Consolas',
+      fontFamilyFallback: [
+        'Courier New',
+        'Menlo',
+        'Monaco',
+        'Droid Sans Mono',
+        'monospace',
+      ],
+      height: 1.2,
+    ),
+  );
 }

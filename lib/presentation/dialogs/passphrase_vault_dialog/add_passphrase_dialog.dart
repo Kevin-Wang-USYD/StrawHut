@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:strawhut/app/motion.dart';
 import 'package:strawhut/app/neumorphic_tokens.dart';
 import 'package:strawhut/core/crypto/crypto_models.dart';
 import 'package:strawhut/core/crypto/passphrase_strength_service.dart';
@@ -9,6 +10,7 @@ import 'package:strawhut/core/passphrase_vault/passphrase_vault_constants.dart';
 import 'package:strawhut/core/passphrase_vault/passphrase_vault_exception.dart';
 import 'package:strawhut/core/passphrase_vault/passphrase_vault_service.dart';
 import 'package:strawhut/l10n/l10n.dart';
+import 'package:strawhut/presentation/dialogs/passphrase_vault_dialog/widgets/vault_styles.dart';
 import 'package:strawhut/presentation/providers/passphrase_vault_provider.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_button.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_container.dart';
@@ -53,7 +55,7 @@ class AddPassphraseDialog extends ConsumerStatefulWidget {
         isScrollControlled: true,
         useSafeArea: true,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
         builder: (context) => DraggableScrollableSheet(
           expand: false,
@@ -230,13 +232,16 @@ class _AddPassphraseDialogState extends ConsumerState<AddPassphraseDialog> {
             // 强度圆点指示器
             ...List.generate(4, (index) {
               final isActive = index <= _strength.index;
-              return Container(
-                width: 10,
-                height: 10,
+              // 分段强度条：激活段取强度色，未激活段为 outlineVariant
+              return AnimatedContainer(
+                duration: StrawMotion.duration(context, StrawMotion.short),
+                curve: StrawMotion.standard,
+                width: 24,
+                height: 6,
                 margin: const EdgeInsets.only(right: 4),
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isActive ? strengthColor : tokens.surfaceAlt,
+                  borderRadius: BorderRadius.circular(3),
+                  color: isActive ? strengthColor : tokens.outlineVariant,
                 ),
               );
             }),
@@ -244,8 +249,8 @@ class _AddPassphraseDialogState extends ConsumerState<AddPassphraseDialog> {
             Text(
               _getStrengthText(l10n),
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
                 color: strengthColor,
               ),
             ),
@@ -269,8 +274,12 @@ class _AddPassphraseDialogState extends ConsumerState<AddPassphraseDialog> {
 
     return NeumorphicContainer(
       shape: NeumorphicShape.flat,
-      borderRadius: tokens.radiusSmall,
-      padding: const EdgeInsets.all(12),
+      color: tokens.surfaceContainerLowest,
+      borderRadius: tokens.radiusMedium,
+      border: Border.all(
+        color: tokens.warning.withValues(alpha: 0.5),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -286,12 +295,16 @@ class _AddPassphraseDialogState extends ConsumerState<AddPassphraseDialog> {
               Expanded(
                 child: Text(
                   l10n.savePassphraseWarning,
-                  style: TextStyle(fontSize: 13, color: tokens.warning),
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 20 / 14,
+                    color: tokens.warning,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 4),
           // 确认复选框
           InkWell(
             onTap: () {
@@ -299,12 +312,13 @@ class _AddPassphraseDialogState extends ConsumerState<AddPassphraseDialog> {
                 _riskConfirmed = !_riskConfirmed;
               });
             },
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(tokens.radiusSmall),
             child: Row(
               children: [
+                // 高 48：整行可点区域满足触摸目标
                 SizedBox(
                   width: 24,
-                  height: 24,
+                  height: 48,
                   child: Checkbox(
                     value: _riskConfirmed,
                     onChanged: (value) {
@@ -321,8 +335,8 @@ class _AddPassphraseDialogState extends ConsumerState<AddPassphraseDialog> {
                   child: Text(
                     l10n.savePassphraseConfirm,
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
                       color: tokens.warning,
                     ),
                   ),
@@ -350,9 +364,9 @@ class _AddPassphraseDialogState extends ConsumerState<AddPassphraseDialog> {
           decoration: InputDecoration(
             labelText: l10n.passphraseLabelField,
             hintText: l10n.passphraseLabelHint,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(tokens.radiusSmall),
-            ),
+            border: vaultOutlinedBorder(tokens),
+            enabledBorder: vaultOutlinedBorder(tokens),
+            focusedBorder: vaultOutlinedBorder(tokens, focused: true),
             counterText: '',
           ),
         ),
@@ -365,14 +379,18 @@ class _AddPassphraseDialogState extends ConsumerState<AddPassphraseDialog> {
           decoration: InputDecoration(
             labelText: l10n.passphraseLabel,
             hintText: l10n.passphraseHint,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(tokens.radiusSmall),
-            ),
+            border: vaultOutlinedBorder(tokens),
+            enabledBorder: vaultOutlinedBorder(tokens),
+            focusedBorder: vaultOutlinedBorder(tokens, focused: true),
             suffixIcon: IconButton(
-              icon: NeumorphicIcon(
-                _obscurePassphrase ? StrawIcons.eyeOff : StrawIcons.eye,
-                size: 20,
-                color: tokens.textSecondary,
+              // 仅读屏朗读（不新增可见文字）
+              icon: Semantics(
+                label: _obscurePassphrase ? '显示暗号' : '隐藏暗号',
+                child: NeumorphicIcon(
+                  _obscurePassphrase ? StrawIcons.eyeOff : StrawIcons.eye,
+                  size: 20,
+                  color: tokens.textSecondary,
+                ),
               ),
               onPressed: () {
                 setState(() {
@@ -398,21 +416,25 @@ class _AddPassphraseDialogState extends ConsumerState<AddPassphraseDialog> {
         if (_errorMessage != null) ...[
           NeumorphicContainer(
             shape: NeumorphicShape.flat,
-            borderRadius: tokens.radiusSmall,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            color: tokens.errorContainer,
+            borderRadius: tokens.radiusMedium,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 NeumorphicIcon(
                   StrawIcons.error,
                   size: 18,
-                  color: tokens.error,
+                  color: tokens.onErrorContainer,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     _errorMessage!,
-                    style: TextStyle(color: tokens.error, fontSize: 13),
+                    style: TextStyle(
+                      color: tokens.onErrorContainer,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
               ],
@@ -430,9 +452,10 @@ class _AddPassphraseDialogState extends ConsumerState<AddPassphraseDialog> {
     final tokens = NeumorphicTokens.ofContext(context);
 
     return Dialog(
-      backgroundColor: tokens.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+      backgroundColor: tokens.surfaceContainerHigh,
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(32)),
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
@@ -445,18 +468,19 @@ class _AddPassphraseDialogState extends ConsumerState<AddPassphraseDialog> {
               // 标题
               Row(
                 children: [
-                  NeumorphicIcon(
-                    StrawIcons.lock,
-                    size: 22,
-                    color: tokens.inkPrimary,
+                  TonalIconBadge(
+                    icon: StrawIcons.lock,
+                    background: tokens.primaryContainer,
+                    foreground: tokens.onPrimaryContainer,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Flexible(
                     child: Text(
                       l10n.addPassphraseTitle,
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 22,
+                        height: 28 / 22,
+                        fontWeight: FontWeight.w700,
                         color: tokens.textPrimary,
                       ),
                     ),
@@ -639,13 +663,16 @@ class _AddPassphraseMobileState extends ConsumerState<_AddPassphraseMobile> {
           children: [
             ...List.generate(4, (index) {
               final isActive = index <= _strength.index;
-              return Container(
-                width: 10,
-                height: 10,
+              // 分段强度条：激活段取强度色，未激活段为 outlineVariant
+              return AnimatedContainer(
+                duration: StrawMotion.duration(context, StrawMotion.short),
+                curve: StrawMotion.standard,
+                width: 24,
+                height: 6,
                 margin: const EdgeInsets.only(right: 4),
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isActive ? strengthColor : tokens.surfaceAlt,
+                  borderRadius: BorderRadius.circular(3),
+                  color: isActive ? strengthColor : tokens.outlineVariant,
                 ),
               );
             }),
@@ -653,8 +680,8 @@ class _AddPassphraseMobileState extends ConsumerState<_AddPassphraseMobile> {
             Text(
               _getStrengthText(l10n),
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
                 color: strengthColor,
               ),
             ),
@@ -676,8 +703,12 @@ class _AddPassphraseMobileState extends ConsumerState<_AddPassphraseMobile> {
 
     return NeumorphicContainer(
       shape: NeumorphicShape.flat,
-      borderRadius: tokens.radiusSmall,
-      padding: const EdgeInsets.all(12),
+      color: tokens.surfaceContainerLowest,
+      borderRadius: tokens.radiusMedium,
+      border: Border.all(
+        color: tokens.warning.withValues(alpha: 0.5),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -693,24 +724,29 @@ class _AddPassphraseMobileState extends ConsumerState<_AddPassphraseMobile> {
               Expanded(
                 child: Text(
                   l10n.savePassphraseWarning,
-                  style: TextStyle(fontSize: 13, color: tokens.warning),
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 20 / 14,
+                    color: tokens.warning,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 4),
           InkWell(
             onTap: () {
               setState(() {
                 _riskConfirmed = !_riskConfirmed;
               });
             },
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(tokens.radiusSmall),
             child: Row(
               children: [
+                // 高 48：整行可点区域满足触摸目标
                 SizedBox(
                   width: 24,
-                  height: 24,
+                  height: 48,
                   child: Checkbox(
                     value: _riskConfirmed,
                     onChanged: (value) {
@@ -727,8 +763,8 @@ class _AddPassphraseMobileState extends ConsumerState<_AddPassphraseMobile> {
                   child: Text(
                     l10n.savePassphraseConfirm,
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
                       color: tokens.warning,
                     ),
                   ),
@@ -756,11 +792,11 @@ class _AddPassphraseMobileState extends ConsumerState<_AddPassphraseMobile> {
           // 拖拽指示条
           Center(
             child: Container(
-              width: 40,
+              width: 32,
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: tokens.surfaceAlt,
+                color: tokens.textSecondary.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -768,18 +804,19 @@ class _AddPassphraseMobileState extends ConsumerState<_AddPassphraseMobile> {
           // 标题
           Row(
             children: [
-              NeumorphicIcon(
-                StrawIcons.lock,
-                size: 22,
-                color: tokens.inkPrimary,
+              TonalIconBadge(
+                icon: StrawIcons.lock,
+                background: tokens.primaryContainer,
+                foreground: tokens.onPrimaryContainer,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Flexible(
                 child: Text(
                   l10n.addPassphraseTitle,
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 22,
+                    height: 28 / 22,
+                    fontWeight: FontWeight.w700,
                     color: tokens.textPrimary,
                   ),
                 ),
@@ -802,10 +839,9 @@ class _AddPassphraseMobileState extends ConsumerState<_AddPassphraseMobile> {
                     decoration: InputDecoration(
                       labelText: l10n.passphraseLabelField,
                       hintText: l10n.passphraseLabelHint,
-                      border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(tokens.radiusSmall),
-                      ),
+                      border: vaultOutlinedBorder(tokens),
+                      enabledBorder: vaultOutlinedBorder(tokens),
+                      focusedBorder: vaultOutlinedBorder(tokens, focused: true),
                       counterText: '',
                     ),
                   ),
@@ -818,17 +854,20 @@ class _AddPassphraseMobileState extends ConsumerState<_AddPassphraseMobile> {
                     decoration: InputDecoration(
                       labelText: l10n.passphraseLabel,
                       hintText: l10n.passphraseHint,
-                      border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(tokens.radiusSmall),
-                      ),
+                      border: vaultOutlinedBorder(tokens),
+                      enabledBorder: vaultOutlinedBorder(tokens),
+                      focusedBorder: vaultOutlinedBorder(tokens, focused: true),
                       suffixIcon: IconButton(
-                        icon: NeumorphicIcon(
-                          _obscurePassphrase
-                              ? StrawIcons.eyeOff
-                              : StrawIcons.eye,
-                          size: 20,
-                          color: tokens.textSecondary,
+                        // 仅读屏朗读（不新增可见文字）
+                        icon: Semantics(
+                          label: _obscurePassphrase ? '显示暗号' : '隐藏暗号',
+                          child: NeumorphicIcon(
+                            _obscurePassphrase
+                                ? StrawIcons.eyeOff
+                                : StrawIcons.eye,
+                            size: 20,
+                            color: tokens.textSecondary,
+                          ),
                         ),
                         onPressed: () {
                           setState(() {
@@ -854,10 +893,11 @@ class _AddPassphraseMobileState extends ConsumerState<_AddPassphraseMobile> {
                   if (_errorMessage != null) ...[
                     NeumorphicContainer(
                       shape: NeumorphicShape.flat,
-                      borderRadius: tokens.radiusSmall,
+                      color: tokens.errorContainer,
+                      borderRadius: tokens.radiusMedium,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                        horizontal: 16,
+                        vertical: 12,
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -865,15 +905,15 @@ class _AddPassphraseMobileState extends ConsumerState<_AddPassphraseMobile> {
                           NeumorphicIcon(
                             StrawIcons.error,
                             size: 18,
-                            color: tokens.error,
+                            color: tokens.onErrorContainer,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               _errorMessage!,
                               style: TextStyle(
-                                color: tokens.error,
-                                fontSize: 13,
+                                color: tokens.onErrorContainer,
+                                fontSize: 14,
                               ),
                             ),
                           ),

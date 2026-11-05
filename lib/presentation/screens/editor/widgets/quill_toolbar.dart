@@ -2,15 +2,16 @@ import 'package:file_picker/file_picker.dart' as file_picker;
 import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:strawhut/app/motion.dart';
 import 'package:strawhut/app/neumorphic_tokens.dart';
 import 'package:strawhut/core/utils/image_service.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_button.dart';
-import 'package:strawhut/presentation/widgets/neumorphic_container.dart';
 
 /// 自定义 Quill 编辑器工具栏
 ///
 /// 为 StrawHut 知识卡片编辑器提供格式控制按钮。
-/// 所有按钮统一采用 Neumorphism 浮空（convex）样式，与全局设计体系一致。
+/// 采用 M3 Expressive 色调圆角工具栏：surfaceContainer 底色、圆形图标按钮，
+/// 选中态 primary 填充并收为圆角方形，按下带弹簧缩放反馈。
 ///
 /// 工具栏按钮分组：
 /// 1. 撤销/重做：undo、redo
@@ -94,124 +95,123 @@ class _QuillToolbarState extends State<QuillToolbar> {
   Widget build(BuildContext context) {
     final tokens = NeumorphicTokens.ofContext(context);
 
-    return Container(
-      // 工具栏容器：与全局水墨设计体系一致
-      decoration: BoxDecoration(
-        color: tokens.surface,
-        border: Border(
-          bottom: BorderSide(color: tokens.divider),
+    // 色调圆角工具栏：surfaceContainer 底色 + 大圆角，悬浮于编辑区上方
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      child: Container(
+        decoration: BoxDecoration(
+          color: tokens.surfaceContainer,
+          borderRadius: BorderRadius.circular(tokens.radiusLarge),
         ),
-      ),
-      // Scrollbar 在 Padding 外层，贴容器底部
-      child: Scrollbar(
-        // 水平滚动条
-        controller: _scrollController,
-        thickness: 4,
-        thumbVisibility: true,
-        radius: const Radius.circular(4),
-        child: SingleChildScrollView(
+        clipBehavior: Clip.antiAlias,
+        // Scrollbar 在 Padding 外层，贴容器底部
+        child: Scrollbar(
+          // 水平滚动条
           controller: _scrollController,
-          scrollDirection: Axis.horizontal,
-          // 不裁切按钮的浮空阴影（上下溢出）
-          clipBehavior: Clip.none,
-          // 内边距用 Padding 而非 Container.padding，
-          // 避免 decoration 边界裁切子按钮的浮空阴影
-          child: Padding(
-            // 垂直留足阴影空间（阴影 offset=4 + blur=8，需上下各 ~10px）
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
-            child: Row(
-              children: [
-                // === 第一组：撤销/重做 ===
-                _buildGroup([
-                  _buildHistoryButton(isUndo: true),
-                  _buildHistoryButton(isUndo: false),
-                ]),
+          thickness: 4,
+          thumbVisibility: true,
+          radius: const Radius.circular(4),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            // 内边距用 Padding 而非 Container.padding，滚动时内容可贴边滑出
+            child: Padding(
+              // 底部多留 2px，避免滚动条压住按钮
+              padding: const EdgeInsets.fromLTRB(4, 4, 4, 6),
+              child: Row(
+                children: [
+                  // === 第一组：撤销/重做 ===
+                  _buildGroup([
+                    _buildHistoryButton(isUndo: true),
+                    _buildHistoryButton(isUndo: false),
+                  ]),
 
-                _buildDivider(),
+                  _buildDivider(),
 
-                // === 第二组：文本样式（加粗、斜体、下划线、删除线） ===
-                _buildGroup([
-                  _buildToggleStyleButton(
-                    attribute: quill.Attribute.bold,
-                    icon: Icons.format_bold,
-                    tooltip: '加粗',
-                  ),
-                  _buildToggleStyleButton(
-                    attribute: quill.Attribute.italic,
-                    icon: Icons.format_italic,
-                    tooltip: '斜体',
-                  ),
-                  _buildToggleStyleButton(
-                    attribute: quill.Attribute.underline,
-                    icon: Icons.format_underline,
-                    tooltip: '下划线',
-                  ),
-                  _buildToggleStyleButton(
-                    attribute: quill.Attribute.strikeThrough,
-                    icon: Icons.format_strikethrough,
-                    tooltip: '删除线',
-                  ),
-                ]),
+                  // === 第二组：文本样式（加粗、斜体、下划线、删除线） ===
+                  _buildGroup([
+                    _buildToggleStyleButton(
+                      attribute: quill.Attribute.bold,
+                      icon: Icons.format_bold,
+                      tooltip: '加粗',
+                    ),
+                    _buildToggleStyleButton(
+                      attribute: quill.Attribute.italic,
+                      icon: Icons.format_italic,
+                      tooltip: '斜体',
+                    ),
+                    _buildToggleStyleButton(
+                      attribute: quill.Attribute.underline,
+                      icon: Icons.format_underline,
+                      tooltip: '下划线',
+                    ),
+                    _buildToggleStyleButton(
+                      attribute: quill.Attribute.strikeThrough,
+                      icon: Icons.format_strikethrough,
+                      tooltip: '删除线',
+                    ),
+                  ]),
 
-                _buildDivider(),
+                  _buildDivider(),
 
-                // === 第三组：标题（H1、H2、H3） ===
-                _buildHeaderStyleDropdown(),
+                  // === 第三组：标题（H1、H2、H3） ===
+                  _buildHeaderStyleDropdown(),
 
-                _buildDivider(),
+                  _buildDivider(),
 
-                // === 第四组：列表（有序、无序） ===
-                _buildGroup([
-                  _buildToggleStyleButton(
-                    attribute: quill.Attribute.ol,
-                    icon: Icons.format_list_numbered,
-                    tooltip: '有序列表',
-                  ),
-                  _buildToggleStyleButton(
-                    attribute: quill.Attribute.ul,
-                    icon: Icons.format_list_bulleted,
-                    tooltip: '无序列表',
-                  ),
-                ]),
+                  // === 第四组：列表（有序、无序） ===
+                  _buildGroup([
+                    _buildToggleStyleButton(
+                      attribute: quill.Attribute.ol,
+                      icon: Icons.format_list_numbered,
+                      tooltip: '有序列表',
+                    ),
+                    _buildToggleStyleButton(
+                      attribute: quill.Attribute.ul,
+                      icon: Icons.format_list_bulleted,
+                      tooltip: '无序列表',
+                    ),
+                  ]),
 
-                _buildDivider(),
+                  _buildDivider(),
 
-                // === 第五组：高级格式（代码块、引用块、分隔线） ===
-                _buildGroup([
-                  _buildToggleStyleButton(
-                    attribute: quill.Attribute.codeBlock,
-                    icon: Icons.code,
-                    tooltip: '代码块',
-                  ),
-                  _buildToggleStyleButton(
-                    attribute: quill.Attribute.blockQuote,
-                    icon: Icons.format_quote,
-                    tooltip: '引用块',
-                  ),
+                  // === 第五组：高级格式（代码块、引用块、分隔线） ===
+                  _buildGroup([
+                    _buildToggleStyleButton(
+                      attribute: quill.Attribute.codeBlock,
+                      icon: Icons.code,
+                      tooltip: '代码块',
+                    ),
+                    _buildToggleStyleButton(
+                      attribute: quill.Attribute.blockQuote,
+                      icon: Icons.format_quote,
+                      tooltip: '引用块',
+                    ),
+                    _buildToolbarIconButton(
+                      icon: Icons.horizontal_rule,
+                      tooltip: '分隔线',
+                      onPressed: _insertHorizontalRule,
+                    ),
+                  ]),
+
+                  _buildDivider(),
+
+                  // === 第六组：插入图片 ===
                   _buildToolbarIconButton(
-                    icon: Icons.horizontal_rule,
-                    tooltip: '分隔线',
-                    onPressed: _insertHorizontalRule,
+                    icon: Icons.image,
+                    tooltip: '插入图片',
+                    onPressed: () => _insertImage(context),
                   ),
-                ]),
 
-                _buildDivider(),
+                  _buildDivider(),
 
-                // === 第六组：插入图片 ===
-                _buildToolbarIconButton(
-                  icon: Icons.image,
-                  tooltip: '插入图片',
-                  onPressed: () => _insertImage(context),
-                ),
+                  // === 第七组：字体颜色选择器 ===
+                  _buildColorButton(),
 
-                _buildDivider(),
-
-                // === 第七组：字体颜色选择器 ===
-                _buildColorButton(),
-
-                // Extra spacing at end for comfortable scroll
-                const SizedBox(width: 8),
-              ],
+                  // Extra spacing at end for comfortable scroll
+                  const SizedBox(width: 4),
+                ],
+              ),
             ),
           ),
         ),
@@ -219,35 +219,33 @@ class _QuillToolbarState extends State<QuillToolbar> {
     );
   }
 
-  /// 构建一组按钮（组内按钮间留 4px 间距避免阴影覆盖）
+  /// 构建一组按钮（圆形按钮紧密相连，组间由分隔线区分）
   Widget _buildGroup(List<Widget> buttons) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Row(
-        children: [
-          for (var i = 0; i < buttons.length; i++) ...[
-            buttons[i],
-            if (i < buttons.length - 1) const SizedBox(width: 4),
-          ],
-        ],
+        children: buttons,
       ),
     );
   }
 
-  /// 构建垂直分隔线
+  /// 构建垂直分隔线（outlineVariant，圆头）
   Widget _buildDivider() {
     final tokens = NeumorphicTokens.ofContext(context);
     return Container(
       width: 1,
-      height: 20,
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-      color: tokens.divider,
+      height: 24,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: tokens.outlineVariant,
+        borderRadius: BorderRadius.circular(1),
+      ),
     );
   }
 
-  /// 构建撤销/重做按钮（浮空样式）
+  /// 构建撤销/重做按钮（圆形图标按钮）
   ///
-  /// 通过 childBuilder 将 flutter_quill 原生按钮渲染为 Neumorphism 浮空风格。
+  /// 通过 childBuilder 将 flutter_quill 原生按钮渲染为圆形图标按钮。
   /// [canPressed] 控制禁用态（无操作可撤销/重做时按钮禁用）。
   Widget _buildHistoryButton({required bool isUndo}) {
     return quill.QuillToolbarHistoryButton(
@@ -269,9 +267,9 @@ class _QuillToolbarState extends State<QuillToolbar> {
     );
   }
 
-  /// 构建切换样式按钮（加粗、斜体等，浮空样式）
+  /// 构建切换样式按钮（加粗、斜体等，圆形图标按钮）
   ///
-  /// 通过 childBuilder 渲染为浮空风格，选中态（isToggled）用墨色填充。
+  /// 通过 childBuilder 渲染为圆形图标按钮，选中态（isToggled）用 primary 填充。
   ///
   /// 点击后记录 toggledStyle，防止后续 selection 更新（如点击编辑框）
   /// 清空格式状态。
@@ -294,6 +292,7 @@ class _QuillToolbarState extends State<QuillToolbar> {
             icon: opts.iconData ?? icon,
             tooltip: opts.tooltip ?? tooltip,
             isSelected: extra.isToggled,
+            isToggle: true,
             onPressed: () {
               extra.onPressed?.call();
               // 记录 toggledStyle，在 selection 更新时恢复
@@ -305,9 +304,9 @@ class _QuillToolbarState extends State<QuillToolbar> {
     );
   }
 
-  /// 构建字体颜色按钮（浮空样式）
+  /// 构建字体颜色按钮（圆形图标按钮）
   ///
-  /// 通过 childBuilder 渲染为浮空风格，图标颜色反映当前字体颜色。
+  /// 通过 childBuilder 渲染为圆形图标按钮，图标颜色反映当前字体颜色。
   /// 用 customOnPressedCallback 替换默认颜色选择器为水墨风对话框。
   Widget _buildColorButton() {
     return quill.QuillToolbarColorButton(
@@ -348,16 +347,16 @@ class _QuillToolbarState extends State<QuillToolbar> {
     );
   }
 
-  /// 构建标题样式下拉选择器（浮空样式）
+  /// 构建标题样式下拉选择器（色调胶囊）
   ///
   /// flutter_quill 的 DropdownButton childBuilder 不可用（抛 UnimplementedError），
   /// 因此自建等效组件，监听 controller 选区变化更新当前标题级别，
-  /// 用 Neumorphism 浮空容器 + PopupMenuButton 实现。
+  /// 用色调胶囊 + PopupMenuButton 实现。
   Widget _buildHeaderStyleDropdown() {
     return _HeaderStyleDropdown(controller: widget.controller);
   }
 
-  /// 构建自定义浮空图标按钮（分隔线、图片等）
+  /// 构建自定义圆形图标按钮（分隔线、图片等）
   Widget _buildToolbarIconButton({
     required IconData icon,
     required String tooltip,
@@ -389,9 +388,10 @@ class _QuillToolbarState extends State<QuillToolbar> {
     final source = await showDialog<ImageSource>(
       context: context,
       builder: (dialogContext) => Dialog(
-        backgroundColor: tokens.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+        backgroundColor: tokens.surfaceContainerHigh,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(32)),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 360),
@@ -404,8 +404,9 @@ class _QuillToolbarState extends State<QuillToolbar> {
                 Text(
                   '插入图片',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 22,
+                    height: 28 / 22,
+                    fontWeight: FontWeight.w700,
                     color: tokens.textPrimary,
                   ),
                 ),
@@ -457,9 +458,10 @@ class _QuillToolbarState extends State<QuillToolbar> {
     final url = await showDialog<String>(
       context: context,
       builder: (dialogContext) => Dialog(
-        backgroundColor: tokens.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+        backgroundColor: tokens.surfaceContainerHigh,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(32)),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 360),
@@ -472,8 +474,9 @@ class _QuillToolbarState extends State<QuillToolbar> {
                 Text(
                   '输入图片 URL',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 22,
+                    height: 28 / 22,
+                    fontWeight: FontWeight.w700,
                     color: tokens.textPrimary,
                   ),
                 ),
@@ -482,27 +485,14 @@ class _QuillToolbarState extends State<QuillToolbar> {
                   controller: urlController,
                   decoration: InputDecoration(
                     hintText: 'https://example.com/image.png',
-                    hintStyle: TextStyle(color: tokens.textHint),
-                    filled: true,
-                    fillColor: tokens.surfaceAlt,
-                    border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(tokens.radiusSmall),
-                      borderSide: BorderSide(color: tokens.divider),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(tokens.radiusSmall),
-                      borderSide: BorderSide(color: tokens.divider),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(tokens.radiusSmall),
-                      borderSide: BorderSide(color: tokens.inkSecondary),
-                    ),
+                    hintStyle: TextStyle(color: tokens.textSecondary),
+                    filled: false,
+                    border: _outlinedBorder(tokens),
+                    enabledBorder: _outlinedBorder(tokens),
+                    focusedBorder: _outlinedBorder(tokens, focused: true),
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
+                      horizontal: 16,
+                      vertical: 16,
                     ),
                   ),
                   style: TextStyle(
@@ -586,6 +576,20 @@ class _QuillToolbarState extends State<QuillToolbar> {
   }
 }
 
+/// M3 描边输入框边框：圆角 16，1px outline；聚焦时 2px primary
+OutlineInputBorder _outlinedBorder(
+  NeumorphicTokens tokens, {
+  bool focused = false,
+}) {
+  return OutlineInputBorder(
+    borderRadius: BorderRadius.circular(tokens.radiusMedium),
+    borderSide: BorderSide(
+      color: focused ? tokens.inkPrimary : tokens.outline,
+      width: focused ? 2 : 1,
+    ),
+  );
+}
+
 /// 图片来源枚举
 enum ImageSource {
   /// 从文件选择
@@ -595,17 +599,23 @@ enum ImageSource {
   url,
 }
 
-/// 浮空工具栏图标按钮
+/// 工具栏圆形图标按钮
 ///
-/// 将 flutter_quill 原生 Material 按钮统一为 Neumorphism 浮空（convex）样式。
-/// 选中态用墨色填充，禁用态平整无阴影，按下凹陷。
+/// 将 flutter_quill 原生 Material 按钮统一为 M3 Expressive 圆形图标按钮：
+/// - 静止态：透明底 + onSurfaceVariant 图标，48×48 圆形触摸目标
+/// - 悬停 / 按下：onSurface 状态层（8% / 10%）
+/// - 选中态：primary 填充 + onPrimary 图标，圆角收为 16（形状变化表达状态）
+/// - 按下：弹簧缩放至 0.9，圆角向 12 收缩后回弹；减少动态效果时关闭
+/// - 禁用态：onSurface 38% 图标
 /// 支持 [IconData] 而非 SVG（与 flutter_quill 图标体系兼容）。
+/// 语义：按钮角色 + 启用状态；[isToggle] 为 true 时额外暴露开关状态。
 class _ToolbarIconButton extends StatefulWidget {
   const _ToolbarIconButton({
     required this.icon,
     this.onPressed,
     this.tooltip,
     this.isSelected = false,
+    this.isToggle = false,
     this.iconColor,
   });
 
@@ -613,6 +623,9 @@ class _ToolbarIconButton extends StatefulWidget {
   final VoidCallback? onPressed;
   final String? tooltip;
   final bool isSelected;
+
+  /// 是否为开关型按钮（加粗、斜体等），用于读屏朗读开/关状态
+  final bool isToggle;
   final Color? iconColor;
 
   @override
@@ -620,6 +633,9 @@ class _ToolbarIconButton extends StatefulWidget {
 }
 
 class _ToolbarIconButtonState extends State<_ToolbarIconButton> {
+  /// 按钮尺寸（满足 48×48 触摸目标）
+  static const double _size = 48;
+
   bool _isHovering = false;
   bool _isPressed = false;
 
@@ -633,97 +649,118 @@ class _ToolbarIconButtonState extends State<_ToolbarIconButton> {
   @override
   Widget build(BuildContext context) {
     final tokens = NeumorphicTokens.ofContext(context);
+    final reduced = StrawMotion.reducedMotion(context);
+    final duration = StrawMotion.duration(context, StrawMotion.short);
 
-    NeumorphicShape shape;
-    NeumorphicIntensity intensity;
-
-    if (_isDisabled) {
-      shape = NeumorphicShape.flat;
-      intensity = NeumorphicIntensity.subtle;
-    } else if (_isPressed) {
-      shape = NeumorphicShape.concave;
-      intensity = NeumorphicIntensity.normal;
-    } else if (_isHovering && !_isMobile) {
-      shape = NeumorphicShape.convex;
-      intensity = NeumorphicIntensity.strong;
-    } else {
-      shape = NeumorphicShape.convex;
-      intensity = _isMobile
-          ? NeumorphicIntensity.subtle
-          : NeumorphicIntensity.normal;
-    }
-
-    // 选中态：墨色填充，图标反白
-    final surfaceColor =
-        widget.isSelected ? tokens.inkPrimary : tokens.surface;
+    // 选中态：primary 填充，图标用 onPrimary
+    final baseBackground = widget.isSelected && !_isDisabled
+        ? tokens.inkPrimary
+        : Colors.transparent;
     final effectiveIconColor = widget.iconColor ??
-        (widget.isSelected
-            ? (tokens.brightness == Brightness.dark
-                ? tokens.surface
-                : const Color(0xFFF5F5F5))
-            : (_isDisabled ? tokens.textHint : tokens.textPrimary));
+        (_isDisabled
+            ? tokens.textPrimary.withValues(alpha: 0.38)
+            : (widget.isSelected ? tokens.onPrimary : tokens.textSecondary));
+
+    // 状态层：悬停 8%、按下 10%
+    final stateLayerColor =
+        widget.isSelected ? tokens.onPrimary : tokens.textPrimary;
+    final stateAlpha = _isDisabled
+        ? 0.0
+        : _isPressed
+            ? 0.10
+            : (_isHovering && !_isMobile)
+                ? 0.08
+                : 0.0;
+    final background = stateAlpha == 0
+        ? baseBackground
+        : Color.alphaBlend(
+            stateLayerColor.withValues(alpha: stateAlpha),
+            baseBackground,
+          );
+
+    // 形状：静止为圆形，选中收为 16，按下收为 12
+    final pressedMorph = _isPressed && !reduced;
+    final radius = pressedMorph
+        ? tokens.radiusSmall
+        : (widget.isSelected ? tokens.radiusMedium : _size / 2);
 
     Widget button = SizedBox(
-      width: 40,
-      height: 40,
-      child: NeumorphicContainer(
-        shape: shape,
-        intensity: intensity,
-        color: surfaceColor,
-        borderRadius: tokens.radiusMedium,
-        padding: EdgeInsets.zero,
+      width: _size,
+      height: _size,
+      child: AnimatedContainer(
+        duration: duration,
+        curve: StrawMotion.standard,
         alignment: Alignment.center,
-        child: Icon(widget.icon, size: 18, color: effectiveIconColor),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(radius),
+        ),
+        child: Icon(widget.icon, size: 20, color: effectiveIconColor),
       ),
     );
 
+    button = AnimatedScale(
+      scale: pressedMorph ? 0.9 : 1.0,
+      duration: duration,
+      curve: StrawMotion.spring,
+      child: button,
+    );
+
     if (widget.tooltip != null) {
-      button = Tooltip(message: widget.tooltip!, child: button);
+      button = Tooltip(message: widget.tooltip, child: button);
     }
 
-    return MouseRegion(
-      cursor: _isDisabled
-          ? SystemMouseCursors.forbidden
-          : SystemMouseCursors.click,
-      onEnter: (_) {
-        if (!_isDisabled && !_isMobile) {
-          setState(() => _isHovering = true);
-        }
-      },
-      onExit: (_) {
-        if (_isHovering) {
-          setState(() => _isHovering = false);
-        }
-      },
-      child: GestureDetector(
-        onTapDown: (_) {
-          if (!_isDisabled) {
-            setState(() => _isPressed = true);
+    // 语义统一由外层 Semantics 提供（按钮角色、启用、开关状态与点击动作）
+    return Semantics(
+      button: true,
+      enabled: !_isDisabled,
+      toggled: widget.isToggle ? widget.isSelected : null,
+      onTap: _isDisabled ? null : widget.onPressed,
+      child: MouseRegion(
+        cursor: _isDisabled
+            ? SystemMouseCursors.forbidden
+            : SystemMouseCursors.click,
+        onEnter: (_) {
+          if (!_isDisabled && !_isMobile) {
+            setState(() => _isHovering = true);
           }
         },
-        onTapUp: (_) {
-          if (_isPressed) {
-            setState(() => _isPressed = false);
-            widget.onPressed?.call();
+        onExit: (_) {
+          if (_isHovering) {
+            setState(() => _isHovering = false);
           }
         },
-        onTapCancel: () {
-          if (_isPressed) {
-            setState(() => _isPressed = false);
-          }
-        },
-        child: button,
+        child: GestureDetector(
+          excludeFromSemantics: true,
+          onTapDown: (_) {
+            if (!_isDisabled) {
+              setState(() => _isPressed = true);
+            }
+          },
+          onTapUp: (_) {
+            if (_isPressed) {
+              setState(() => _isPressed = false);
+              widget.onPressed?.call();
+            }
+          },
+          onTapCancel: () {
+            if (_isPressed) {
+              setState(() => _isPressed = false);
+            }
+          },
+          child: button,
+        ),
       ),
     );
   }
 }
 
-/// 标题样式下拉选择器（浮空样式）
+/// 标题样式下拉选择器（色调胶囊样式）
 ///
 /// flutter_quill 的 DropdownButton childBuilder 不可用，因此自建等效组件：
 /// - 监听 controller 选区变化，更新当前标题级别
-/// - 浮空容器 + PopupMenu 实现选择交互
-/// - 配色与全局 Neumorphism 水墨体系一致
+/// - 色调胶囊 + PopupMenu 实现选择交互
+/// - 配色取自 M3 色彩令牌
 class _HeaderStyleDropdown extends StatefulWidget {
   const _HeaderStyleDropdown({required this.controller});
 
@@ -803,6 +840,11 @@ class _HeaderStyleDropdownState extends State<_HeaderStyleDropdown> {
     return PopupMenuButton<quill.Attribute<int?>>(
       tooltip: '标题样式',
       onSelected: _select,
+      color: tokens.surfaceContainer,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(tokens.radiusMedium),
+      ),
       itemBuilder: (context) => _options
           .map(
             (attr) => PopupMenuItem(
@@ -811,7 +853,7 @@ class _HeaderStyleDropdownState extends State<_HeaderStyleDropdown> {
                 _label(attr),
                 style: TextStyle(
                   fontSize: 14,
-                  fontWeight: attr == _selected ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: attr == _selected ? FontWeight.w700 : FontWeight.w400,
                   color: attr == _selected ? tokens.inkPrimary : tokens.textPrimary,
                 ),
               ),
@@ -827,7 +869,9 @@ class _HeaderStyleDropdownState extends State<_HeaderStyleDropdown> {
   }
 }
 
-/// 下拉触发器（浮空样式）
+/// 下拉触发器（色调胶囊样式）
+///
+/// secondaryContainer 胶囊，48 高，标签 w700，与圆形图标按钮同处一条工具栏。
 class _DropdownTrigger extends StatelessWidget {
   const _DropdownTrigger({
     required this.label,
@@ -839,32 +883,37 @@ class _DropdownTrigger extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 80, minHeight: 40),
-      child: NeumorphicContainer(
-        shape: NeumorphicShape.convex,
-        intensity: NeumorphicIntensity.normal,
-        color: tokens.surface,
-        borderRadius: tokens.radiusMedium,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: tokens.textPrimary,
+    return Padding(
+      // 上下各 4px 透明留白：视觉 40 高，触摸区域 48 高
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 80, minHeight: 40),
+        child: Container(
+          decoration: ShapeDecoration(
+            color: tokens.secondaryContainer,
+            shape: const StadiumBorder(),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 8, 10, 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 20 / 14,
+                  fontWeight: FontWeight.w700,
+                  color: tokens.onSecondaryContainer,
+                ),
               ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.arrow_drop_down,
-              size: 18,
-              color: tokens.textSecondary,
-            ),
-          ],
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_drop_down,
+                size: 20,
+                color: tokens.onSecondaryContainer,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -873,7 +922,7 @@ class _DropdownTrigger extends StatelessWidget {
 
 /// 水墨风颜色选择器对话框
 ///
-/// 提供预设色板 + 自定义 HEX 输入，配色与全局 Neumorphism 体系一致。
+/// 提供预设色板 + 自定义 HEX 输入，配色取自 M3 色彩令牌。
 class _ColorPickerDialog extends StatefulWidget {
   const _ColorPickerDialog({
     required this.controller,
@@ -963,9 +1012,10 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
     final tokens = NeumorphicTokens.ofContext(context);
 
     return Dialog(
-      backgroundColor: tokens.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+      backgroundColor: tokens.surfaceContainerHigh,
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(32)),
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360),
@@ -978,37 +1028,62 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
               Text(
                 widget.isBackground ? '选择背景颜色' : '选择字体颜色',
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 22,
+                  height: 28 / 22,
+                  fontWeight: FontWeight.w700,
                   color: tokens.textPrimary,
                 ),
               ),
               SizedBox(height: tokens.spaceMd),
               // 预设色板
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 4,
+                runSpacing: 4,
                 children: _presetColors.map((color) {
                   final isSelected = _selectedColor.toARGB32() == color.toARGB32();
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedColor = color;
-                        _hexController.text = _colorToHex(color);
-                      });
-                      _applyColor(color);
-                    },
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: color,
-                        borderRadius: BorderRadius.circular(tokens.radiusSmall),
-                        border: Border.all(
-                          color: isSelected
-                              ? tokens.inkPrimary
-                              : tokens.divider,
-                          width: isSelected ? 2.5 : 1,
+                  void onSwatchTap() {
+                    setState(() {
+                      _selectedColor = color;
+                      _hexController.text = _colorToHex(color);
+                    });
+                    _applyColor(color);
+                  }
+
+                  // 色块无可见文字：以 HEX 值作为读屏标签（不新增可见文本）
+                  return Semantics(
+                    button: true,
+                    selected: isSelected,
+                    label: '#${_colorToHex(color)}',
+                    onTap: onSwatchTap,
+                    child: GestureDetector(
+                      excludeFromSemantics: true,
+                      onTap: onSwatchTap,
+                      // 48×48 触摸区域，内部 40 的圆形色块；选中时收为圆角方形
+                      child: SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: Center(
+                          child: AnimatedContainer(
+                            duration: StrawMotion.duration(
+                              context,
+                              StrawMotion.short,
+                            ),
+                            curve: StrawMotion.spring,
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(
+                                isSelected ? tokens.radiusSmall : 20,
+                              ),
+                              border: Border.all(
+                                color: isSelected
+                                    ? tokens.inkPrimary
+                                    : tokens.outlineVariant,
+                                width: isSelected ? 2.5 : 1,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -1020,46 +1095,33 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
               Row(
                 children: [
                   Container(
-                    width: 32,
-                    height: 32,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
                       color: _selectedColor,
                       borderRadius: BorderRadius.circular(tokens.radiusSmall),
-                      border: Border.all(color: tokens.divider),
+                      border: Border.all(color: tokens.outlineVariant),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       controller: _hexController,
                       decoration: InputDecoration(
                         prefixText: '#',
                         hintText: 'RRGGBBAA',
-                        hintStyle: TextStyle(color: tokens.textHint),
-                        filled: true,
-                        fillColor: tokens.surfaceAlt,
-                        border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(tokens.radiusSmall),
-                          borderSide: BorderSide(color: tokens.divider),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(tokens.radiusSmall),
-                          borderSide: BorderSide(color: tokens.divider),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(tokens.radiusSmall),
-                          borderSide: BorderSide(color: tokens.inkSecondary),
-                        ),
+                        hintStyle: TextStyle(color: tokens.textSecondary),
+                        filled: false,
+                        border: _outlinedBorder(tokens),
+                        enabledBorder: _outlinedBorder(tokens),
+                        focusedBorder: _outlinedBorder(tokens, focused: true),
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 10,
+                          horizontal: 16,
+                          vertical: 14,
                         ),
                       ),
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         fontFamily: 'monospace',
                         color: tokens.textPrimary,
                       ),

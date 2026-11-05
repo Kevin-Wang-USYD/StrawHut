@@ -9,7 +9,9 @@ import 'package:strawhut/core/passphrase_vault/passphrase_vault_service.dart';
 import 'package:strawhut/l10n/l10n.dart';
 import 'package:strawhut/presentation/dialogs/passphrase_vault_dialog/add_passphrase_dialog.dart';
 import 'package:strawhut/presentation/dialogs/passphrase_vault_dialog/widgets/passphrase_entry_tile.dart';
+import 'package:strawhut/presentation/dialogs/passphrase_vault_dialog/widgets/vault_styles.dart';
 import 'package:strawhut/presentation/providers/passphrase_vault_provider.dart';
+import 'package:strawhut/presentation/widgets/loading_indicator.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_button.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_container.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_icon.dart';
@@ -41,7 +43,7 @@ class PassphraseVaultDialog extends ConsumerStatefulWidget {
         isScrollControlled: true,
         useSafeArea: true,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
         builder: (context) => DraggableScrollableSheet(
           initialChildSize: 0.7,
@@ -82,9 +84,10 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
       builder: (context) {
         final tokens = NeumorphicTokens.ofContext(context);
         return Dialog(
-          backgroundColor: tokens.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+          backgroundColor: tokens.surfaceContainerHigh,
+          surfaceTintColor: Colors.transparent,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(32)),
           ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
@@ -96,18 +99,19 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
                 children: [
                   Row(
                     children: [
-                      NeumorphicIcon(
-                        StrawIcons.trash,
-                        size: 22,
-                        color: tokens.error,
+                      TonalIconBadge(
+                        icon: StrawIcons.trash,
+                        background: tokens.errorContainer,
+                        foreground: tokens.onErrorContainer,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       Flexible(
                         child: Text(
                           l10n.deletePassphraseTitle,
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 22,
+                            height: 28 / 22,
+                            fontWeight: FontWeight.w700,
                             color: tokens.textPrimary,
                           ),
                         ),
@@ -133,7 +137,7 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
                     const SizedBox(width: 12),
                     NeumorphicButton(
                       label: l10n.delete,
-                        style: NeumorphicButtonStyle.primary,
+                        style: NeumorphicButtonStyle.danger,
                         onPressed: () => Navigator.pop(context, true),
                       ),
                     ],
@@ -177,9 +181,10 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
           builder: (context, setDialogState) {
             final isDeleteEnabled = inputText == 'DELETE';
             return Dialog(
-              backgroundColor: tokens.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+              backgroundColor: tokens.surfaceContainerHigh,
+              surfaceTintColor: Colors.transparent,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(32)),
               ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 400),
@@ -191,18 +196,19 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
                     children: [
                       Row(
                         children: [
-                          NeumorphicIcon(
-                            StrawIcons.warning,
-                            size: 22,
-                            color: tokens.error,
+                          TonalIconBadge(
+                            icon: StrawIcons.warning,
+                            background: tokens.errorContainer,
+                            foreground: tokens.onErrorContainer,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 12),
                           Flexible(
                             child: Text(
                               l10n.clearAllTitle,
                               style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 22,
+                                height: 28 / 22,
+                                fontWeight: FontWeight.w700,
                                 color: tokens.textPrimary,
                               ),
                             ),
@@ -221,7 +227,8 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
                       Text(
                         l10n.clearAllConfirmInput,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
                           color: tokens.textPrimary,
                         ),
                       ),
@@ -232,10 +239,9 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
                           setDialogState(() {});
                         },
                         decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(tokens.radiusSmall),
-                          ),
+                          border: vaultOutlinedBorder(tokens),
+                          enabledBorder: vaultOutlinedBorder(tokens),
+                          focusedBorder: vaultOutlinedBorder(tokens, focused: true),
                           hintText: 'DELETE',
                         ),
                       ),
@@ -250,7 +256,7 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
                         const SizedBox(width: 12),
                         NeumorphicButton(
                           label: l10n.clearAll,
-                            style: NeumorphicButtonStyle.primary,
+                            style: NeumorphicButtonStyle.danger,
                             onPressed: isDeleteEnabled
                                 ? () => Navigator.pop(context, true)
                                 : null,
@@ -295,24 +301,31 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            NeumorphicIcon(
-              StrawIcons.unlock,
-              size: 56,
-              color: tokens.textHint,
+            TonalIconBadge(
+              icon: StrawIcons.unlock,
+              size: 88,
+              iconSize: 40,
+              background: tokens.surfaceContainerHighest,
+              foreground: tokens.textSecondary,
             ),
             SizedBox(height: tokens.spaceMd),
             Text(
               l10n.vaultEmptyTitle,
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: tokens.textSecondary,
+                height: 24 / 16,
+                fontWeight: FontWeight.w700,
+                color: tokens.textPrimary,
               ),
             ),
-            SizedBox(height: tokens.spaceSm),
+            SizedBox(height: tokens.spaceXs),
             Text(
               l10n.vaultEmptyDesc,
-              style: TextStyle(fontSize: 13, color: tokens.textHint),
+              style: TextStyle(
+                fontSize: 14,
+                height: 20 / 14,
+                color: tokens.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: tokens.spaceLg + 4),
@@ -339,23 +352,25 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
         // 安全提示
         NeumorphicContainer(
           shape: NeumorphicShape.flat,
-          borderRadius: tokens.radiusSmall,
-          padding: const EdgeInsets.all(10),
+          color: tokens.secondaryContainer,
+          borderRadius: tokens.radiusMedium,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               NeumorphicIcon(
                 StrawIcons.lock,
                 size: 18,
-                color: tokens.inkSecondary,
+                color: tokens.onSecondaryContainer,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   l10n.vaultSecurityNote,
                   style: TextStyle(
                     fontSize: 12,
-                    color: tokens.textSecondary,
+                    height: 16 / 12,
+                    color: tokens.onSecondaryContainer,
                   ),
                 ),
               ),
@@ -390,6 +405,7 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
               child: NeumorphicButton(
                 label: l10n.vaultClearAllButton,
                 icon: StrawIcons.trash,
+                style: NeumorphicButtonStyle.outlined,
                 expanded: true,
                 onPressed: entries.isNotEmpty ? _handleClearAll : null,
               ),
@@ -407,7 +423,7 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
       padding: EdgeInsets.only(top: tokens.spaceSm + tokens.spaceXs),
       child: Text(
         l10n.vaultCountLabel(count),
-        style: TextStyle(fontSize: 12, color: tokens.textHint),
+        style: TextStyle(fontSize: 12, color: tokens.textSecondary),
         textAlign: TextAlign.center,
       ),
     );
@@ -420,9 +436,10 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
     final entriesAsync = ref.watch(passphraseEntriesProvider);
 
     return Dialog(
-      backgroundColor: tokens.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+      backgroundColor: tokens.surfaceContainerHigh,
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(32)),
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480, maxHeight: 600),
@@ -435,18 +452,19 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
               // 标题
               Row(
                 children: [
-                  NeumorphicIcon(
-                    StrawIcons.lock,
-                    size: 22,
-                    color: tokens.inkPrimary,
+                  TonalIconBadge(
+                    icon: StrawIcons.lock,
+                    background: tokens.primaryContainer,
+                    foreground: tokens.onPrimaryContainer,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Flexible(
                     child: Text(
                       l10n.vaultTitle,
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 22,
+                        height: 28 / 22,
+                        fontWeight: FontWeight.w700,
                         color: tokens.textPrimary,
                       ),
                     ),
@@ -470,18 +488,10 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
                         ],
                       );
                     },
-                    loading: () => SizedBox(
+                    loading: () => const SizedBox(
                       height: 200,
                       child: Center(
-                        child: NeumorphicContainer(
-                          shape: NeumorphicShape.flat,
-                          borderRadius: tokens.radiusXLarge,
-                          padding: const EdgeInsets.all(16),
-                          child: CircularProgressIndicator(
-                            color: tokens.inkPrimary,
-                            strokeWidth: 2.5,
-                          ),
-                        ),
+                        child: StrawLoadingIndicator(size: 48),
                       ),
                     ),
                     error: (Object error, _) => SizedBox(
@@ -500,7 +510,7 @@ class _PassphraseVaultDialogState extends ConsumerState<PassphraseVaultDialog> {
                               error.toString(),
                               style: TextStyle(
                                 color: tokens.error,
-                                fontSize: 13,
+                                fontSize: 14,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -552,9 +562,10 @@ class _PassphraseVaultMobileState
       builder: (context) {
         final tokens = NeumorphicTokens.ofContext(context);
         return Dialog(
-          backgroundColor: tokens.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+          backgroundColor: tokens.surfaceContainerHigh,
+          surfaceTintColor: Colors.transparent,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(32)),
           ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
@@ -566,18 +577,19 @@ class _PassphraseVaultMobileState
                 children: [
                   Row(
                     children: [
-                      NeumorphicIcon(
-                        StrawIcons.trash,
-                        size: 22,
-                        color: tokens.error,
+                      TonalIconBadge(
+                        icon: StrawIcons.trash,
+                        background: tokens.errorContainer,
+                        foreground: tokens.onErrorContainer,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       Flexible(
                         child: Text(
                           l10n.deletePassphraseTitle,
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 22,
+                            height: 28 / 22,
+                            fontWeight: FontWeight.w700,
                             color: tokens.textPrimary,
                           ),
                         ),
@@ -603,7 +615,7 @@ class _PassphraseVaultMobileState
                     const SizedBox(width: 12),
                     NeumorphicButton(
                       label: l10n.delete,
-                        style: NeumorphicButtonStyle.primary,
+                        style: NeumorphicButtonStyle.danger,
                         onPressed: () => Navigator.pop(context, true),
                       ),
                     ],
@@ -646,9 +658,10 @@ class _PassphraseVaultMobileState
           builder: (context, setDialogState) {
             final isDeleteEnabled = inputText == 'DELETE';
             return Dialog(
-              backgroundColor: tokens.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+              backgroundColor: tokens.surfaceContainerHigh,
+              surfaceTintColor: Colors.transparent,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(32)),
               ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 400),
@@ -660,18 +673,19 @@ class _PassphraseVaultMobileState
                     children: [
                       Row(
                         children: [
-                          NeumorphicIcon(
-                            StrawIcons.warning,
-                            size: 22,
-                            color: tokens.error,
+                          TonalIconBadge(
+                            icon: StrawIcons.warning,
+                            background: tokens.errorContainer,
+                            foreground: tokens.onErrorContainer,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 12),
                           Flexible(
                             child: Text(
                               l10n.clearAllTitle,
                               style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 22,
+                                height: 28 / 22,
+                                fontWeight: FontWeight.w700,
                                 color: tokens.textPrimary,
                               ),
                             ),
@@ -690,7 +704,8 @@ class _PassphraseVaultMobileState
                       Text(
                         l10n.clearAllConfirmInput,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
                           color: tokens.textPrimary,
                         ),
                       ),
@@ -701,10 +716,9 @@ class _PassphraseVaultMobileState
                           setDialogState(() {});
                         },
                         decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(tokens.radiusSmall),
-                          ),
+                          border: vaultOutlinedBorder(tokens),
+                          enabledBorder: vaultOutlinedBorder(tokens),
+                          focusedBorder: vaultOutlinedBorder(tokens, focused: true),
                           hintText: 'DELETE',
                         ),
                       ),
@@ -719,7 +733,7 @@ class _PassphraseVaultMobileState
                         const SizedBox(width: 12),
                         NeumorphicButton(
                           label: l10n.clearAll,
-                            style: NeumorphicButtonStyle.primary,
+                            style: NeumorphicButtonStyle.danger,
                             onPressed: isDeleteEnabled
                                 ? () => Navigator.pop(context, true)
                                 : null,
@@ -763,24 +777,31 @@ class _PassphraseVaultMobileState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            NeumorphicIcon(
-              StrawIcons.unlock,
-              size: 56,
-              color: tokens.textHint,
+            TonalIconBadge(
+              icon: StrawIcons.unlock,
+              size: 88,
+              iconSize: 40,
+              background: tokens.surfaceContainerHighest,
+              foreground: tokens.textSecondary,
             ),
             SizedBox(height: tokens.spaceMd),
             Text(
               l10n.vaultEmptyTitle,
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: tokens.textSecondary,
+                height: 24 / 16,
+                fontWeight: FontWeight.w700,
+                color: tokens.textPrimary,
               ),
             ),
-            SizedBox(height: tokens.spaceSm),
+            SizedBox(height: tokens.spaceXs),
             Text(
               l10n.vaultEmptyDesc,
-              style: TextStyle(fontSize: 13, color: tokens.textHint),
+              style: TextStyle(
+                fontSize: 14,
+                height: 20 / 14,
+                color: tokens.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: tokens.spaceLg + 4),
@@ -806,23 +827,25 @@ class _PassphraseVaultMobileState
         // 安全提示
         NeumorphicContainer(
           shape: NeumorphicShape.flat,
-          borderRadius: tokens.radiusSmall,
-          padding: const EdgeInsets.all(10),
+          color: tokens.secondaryContainer,
+          borderRadius: tokens.radiusMedium,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               NeumorphicIcon(
                 StrawIcons.lock,
                 size: 18,
-                color: tokens.inkSecondary,
+                color: tokens.onSecondaryContainer,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   l10n.vaultSecurityNote,
                   style: TextStyle(
                     fontSize: 12,
-                    color: tokens.textSecondary,
+                    height: 16 / 12,
+                    color: tokens.onSecondaryContainer,
                   ),
                 ),
               ),
@@ -857,6 +880,7 @@ class _PassphraseVaultMobileState
               child: NeumorphicButton(
                 label: l10n.vaultClearAllButton,
                 icon: StrawIcons.trash,
+                style: NeumorphicButtonStyle.outlined,
                 expanded: true,
                 onPressed: entries.isNotEmpty ? _handleClearAll : null,
               ),
@@ -873,7 +897,7 @@ class _PassphraseVaultMobileState
       padding: EdgeInsets.only(top: tokens.spaceSm + tokens.spaceXs),
       child: Text(
         l10n.vaultCountLabel(count),
-        style: TextStyle(fontSize: 12, color: tokens.textHint),
+        style: TextStyle(fontSize: 12, color: tokens.textSecondary),
         textAlign: TextAlign.center,
       ),
     );
@@ -895,11 +919,11 @@ class _PassphraseVaultMobileState
           // 拖拽指示条
           Center(
             child: Container(
-              width: 40,
+              width: 32,
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: tokens.surfaceAlt,
+                color: tokens.textSecondary.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -908,18 +932,19 @@ class _PassphraseVaultMobileState
           // 标题
           Row(
             children: [
-              NeumorphicIcon(
-                StrawIcons.lock,
-                size: 22,
-                color: tokens.inkPrimary,
+              TonalIconBadge(
+                icon: StrawIcons.lock,
+                background: tokens.primaryContainer,
+                foreground: tokens.onPrimaryContainer,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Flexible(
                 child: Text(
                   l10n.vaultTitle,
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 22,
+                    height: 28 / 22,
+                    fontWeight: FontWeight.w700,
                     color: tokens.textPrimary,
                   ),
                 ),
@@ -945,18 +970,10 @@ class _PassphraseVaultMobileState
                     ],
                   );
                 },
-                loading: () => SizedBox(
+                loading: () => const SizedBox(
                   height: 200,
                   child: Center(
-                    child: NeumorphicContainer(
-                      shape: NeumorphicShape.flat,
-                      borderRadius: tokens.radiusXLarge,
-                      padding: const EdgeInsets.all(16),
-                      child: CircularProgressIndicator(
-                        color: tokens.inkPrimary,
-                        strokeWidth: 2.5,
-                      ),
-                    ),
+                    child: StrawLoadingIndicator(size: 48),
                   ),
                 ),
                 error: (Object error, _) => SizedBox(
@@ -975,7 +992,7 @@ class _PassphraseVaultMobileState
                           error.toString(),
                           style: TextStyle(
                             color: tokens.error,
-                            fontSize: 13,
+                            fontSize: 14,
                           ),
                           textAlign: TextAlign.center,
                         ),
