@@ -16,8 +16,8 @@ import 'package:strawhut/presentation/widgets/neumorphic_icon.dart';
 /// - 格式验证失败时在任意页面显示
 ///
 /// 设计特点：
-/// - Neumorphism 水墨风：凹陷软槽容器
-/// - 错误图标 + 语义色文字（tokens.error）
+/// - M3 Expressive：errorContainer 色调容器，16 圆角
+/// - 错误图标 + onErrorContainer 文字（对比度 ≥ 4.5:1）
 /// - 错误消息文字可换行（Expanded）
 /// - 可选的关闭按钮（onDismiss）
 /// - 固定在页面顶部，不随内容滚动
@@ -54,7 +54,7 @@ class ErrorBanner extends StatelessWidget {
   /// 构建错误横幅 UI
   ///
   /// 布局结构：
-  /// - NeumorphicContainer（凹陷软槽 + 内边距）
+  /// - NeumorphicContainer（errorContainer 色调容器 + 内边距）
   ///   - Row
   ///     - NeumorphicIcon（错误图标）
   ///     - Text（错误消息，可换行）
@@ -65,35 +65,41 @@ class ErrorBanner extends StatelessWidget {
 
     return NeumorphicContainer(
       shape: NeumorphicShape.flat,
+      color: tokens.errorContainer,
       borderRadius: tokens.radiusMedium,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: onDismiss != null ? 4 : 16,
+        top: onDismiss != null ? 4 : 12,
+        bottom: onDismiss != null ? 4 : 12,
+      ),
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
           NeumorphicIcon(
             StrawIcons.error,
             size: 20,
-            color: tokens.error,
+            color: tokens.onErrorContainer,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
               style: TextStyle(
-                fontSize: 13,
-                color: tokens.error,
-                height: 1.4,
+                fontSize: 14,
+                color: tokens.onErrorContainer,
+                height: 20 / 14,
               ),
             ),
           ),
           if (onDismiss != null) ...[
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
             NeumorphicIconButton(
               icon: StrawIcons.close,
-              size: 32,
-              iconSize: 16,
+              iconSize: 18,
               onPressed: onDismiss,
-              color: tokens.textSecondary,
+              color: tokens.onErrorContainer,
+              semanticLabel: '关闭',
             ),
           ],
         ],

@@ -3,10 +3,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:strawhut/app/neumorphic_tokens.dart';
 
-/// 线性细描边图标系统（Neumorphism 风格）
+/// 线性描边图标系统
 ///
 /// 设计规范：
-/// - stroke-width: 1.6（细描边，柔和不抢眼）
+/// - stroke-width: 1.8（略加粗，与 M3 Expressive 的粗字重相协调）
 /// - stroke-linecap: round
 /// - stroke-linejoin: round
 /// - 不使用 fill，仅描边
@@ -16,6 +16,9 @@ import 'package:strawhut/app/neumorphic_tokens.dart';
 /// ```dart
 /// NeumorphicIcon(StrawIcons.lock, size: 24, color: tokens.inkPrimary)
 /// ```
+///
+/// 配色约定：默认 onSurfaceVariant（tokens.textSecondary）；
+/// 激活/主要操作使用 primary（tokens.inkPrimary）。
 class StrawIcons {
   StrawIcons._();
 
@@ -24,7 +27,7 @@ class StrawIcons {
   /// 通过 `__COLOR__` 占位符注入颜色，避免依赖 SVG 的 currentColor 解析差异。
   static String _wrap(String body) {
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
-        'fill="none" stroke="__COLOR__" stroke-width="1.6" '
+        'fill="none" stroke="__COLOR__" stroke-width="1.8" '
         'stroke-linecap="round" stroke-linejoin="round">$body</svg>';
   }
 
@@ -289,9 +292,11 @@ class StrawIcons {
   }
 }
 
-/// 软质风格图标 Widget
+/// 描边图标 Widget
 ///
-/// 基于 SVG 渲染线性细描边图标，颜色随主题自适应。
+/// 基于 SVG 渲染线性描边图标，颜色随主题自适应：
+/// 未指定 [color] 时取 onSurfaceVariant（tokens.textSecondary）。
+/// 装饰性图标无需语义；独立表达含义的图标请由外层提供 Tooltip/Semantics。
 ///
 /// 用法：
 /// ```dart
@@ -311,13 +316,13 @@ class NeumorphicIcon extends StatelessWidget {
   /// 图标尺寸（宽高相同）
   final double size;
 
-  /// 图标颜色；为 null 时取主题 inkSecondary
+  /// 图标颜色；为 null 时取 onSurfaceVariant（tokens.textSecondary）
   final Color? color;
 
   @override
   Widget build(BuildContext context) {
     final resolvedColor = color ??
-        NeumorphicTokens.ofContext(context).inkSecondary;
+        NeumorphicTokens.ofContext(context).textSecondary;
     return SvgPicture.string(
       StrawIcons.svg(iconBody, resolvedColor),
       width: size,
