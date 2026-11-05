@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:strawhut/app/routes.dart';
 import 'package:strawhut/presentation/screens/home/widgets/action_buttons.dart';
-import 'package:strawhut/presentation/widgets/neumorphic_button.dart';
 import 'package:strawhut/presentation/widgets/neumorphic_icon.dart';
 
 /// 操作按钮 Widget 单元测试
 ///
 /// 测试目标：验证 ActionButtons 的按钮点击行为是否符合任务 3.3 验收标准
 /// 覆盖范围：
-/// - "发布知识卡片" 按钮使用 NeumorphicButton 样式
-/// - "解密知识卡片" 按钮使用 NeumorphicButton 样式
+/// - "发布知识卡片" / "解密知识卡片" 使用 ActionTile 两列操作卡
 /// - 按钮点击后触发正确的导航
-/// - 按钮布局结构正确（Column、间距等）
+/// - 布局结构正确（两列并排、等高、间距、窄屏不溢出）
+/// - 语义：每张卡片是一个带标题的按钮
 void main() {
   /// 在每个测试前重置路由到初始状态
   ///
@@ -45,7 +45,7 @@ void main() {
   }
 
   group('ActionButtons 按钮样式测试', () {
-    testWidgets('"发布知识卡片"按钮应为 NeumorphicButton 类型', (WidgetTester tester) async {
+    testWidgets('"发布知识卡片"应为 ActionTile 操作卡', (WidgetTester tester) async {
       // 构建包含 ActionButtons 的测试 Widget
       await tester.pumpWidget(createTestableWidget());
       await tester.pumpAndSettle();
@@ -54,17 +54,17 @@ void main() {
       final createButton = find.text('发布知识卡片');
       expect(createButton, findsOneWidget);
 
-      // 验证该文字在 NeumorphicButton 内部
+      // 验证该文字在 ActionTile 内部
       expect(
         find.descendant(
-          of: find.byType(NeumorphicButton),
+          of: find.byType(ActionTile),
           matching: find.text('发布知识卡片'),
         ),
         findsOneWidget,
       );
     });
 
-    testWidgets('"解密知识卡片"按钮应为 NeumorphicButton 类型', (WidgetTester tester) async {
+    testWidgets('"解密知识卡片"应为 ActionTile 操作卡', (WidgetTester tester) async {
       // 构建包含 ActionButtons 的测试 Widget
       await tester.pumpWidget(createTestableWidget());
       await tester.pumpAndSettle();
@@ -73,10 +73,10 @@ void main() {
       final openButton = find.text('解密知识卡片');
       expect(openButton, findsOneWidget);
 
-      // 验证该文字在 NeumorphicButton 内部
+      // 验证该文字在 ActionTile 内部
       expect(
         find.descendant(
-          of: find.byType(NeumorphicButton),
+          of: find.byType(ActionTile),
           matching: find.text('解密知识卡片'),
         ),
         findsOneWidget,
@@ -92,7 +92,7 @@ void main() {
       // 验证按钮图标存在（NeumorphicIcon 渲染 SVG 图标）
       expect(
         find.descendant(
-          of: find.widgetWithText(NeumorphicButton, '发布知识卡片'),
+          of: find.widgetWithText(ActionTile, '发布知识卡片'),
           matching: find.byType(NeumorphicIcon),
         ),
         findsOneWidget,
@@ -108,7 +108,7 @@ void main() {
       // 验证按钮图标存在（NeumorphicIcon 渲染 SVG 图标）
       expect(
         find.descendant(
-          of: find.widgetWithText(NeumorphicButton, '解密知识卡片'),
+          of: find.widgetWithText(ActionTile, '解密知识卡片'),
           matching: find.byType(NeumorphicIcon),
         ),
         findsOneWidget,
@@ -120,69 +120,88 @@ void main() {
       await tester.pumpWidget(createTestableWidget());
       await tester.pumpAndSettle();
 
-      // 验证使用了两个 NeumorphicButton
-      expect(find.byType(NeumorphicButton), findsNWidgets(2));
+      // 验证使用了两张 ActionTile
+      expect(find.byType(ActionTile), findsNWidgets(2));
     });
   });
 
   group('ActionButtons 布局结构测试', () {
-    testWidgets('按钮组应使用 Column 垂直布局', (WidgetTester tester) async {
-      // 构建包含 ActionButtons 的测试 Widget
+    testWidgets('两张操作卡应左右并排（发布在左，解密在右，顶部对齐）',
+        (WidgetTester tester) async {
       await tester.pumpWidget(createTestableWidget());
       await tester.pumpAndSettle();
 
-      // 验证 ActionButtons 内部使用 Column
-      expect(
-        find.descendant(
-          of: find.byType(ActionButtons),
-          matching: find.byType(Column),
-        ),
-        findsOneWidget,
-      );
+      final createRect = tester.getRect(find.widgetWithText(ActionTile, '发布知识卡片'));
+      final openRect = tester.getRect(find.widgetWithText(ActionTile, '解密知识卡片'));
+
+      expect(openRect.left, greaterThan(createRect.right));
+      expect(openRect.top, moreOrLessEquals(createRect.top));
     });
 
-    testWidgets('按钮组应横向拉伸（stretch）', (WidgetTester tester) async {
-      // 构建包含 ActionButtons 的测试 Widget
+    testWidgets('两张操作卡应等高、等宽，且最小高度 120', (WidgetTester tester) async {
       await tester.pumpWidget(createTestableWidget());
       await tester.pumpAndSettle();
 
-      // 获取 Column 的 crossAxisAlignment 属性
-      final columnFinder = find.descendant(
-        of: find.byType(ActionButtons),
-        matching: find.byType(Column),
-      );
-      final column = tester.widget<Column>(columnFinder);
-      expect(column.crossAxisAlignment, CrossAxisAlignment.stretch);
+      final createRect = tester.getRect(find.widgetWithText(ActionTile, '发布知识卡片'));
+      final openRect = tester.getRect(find.widgetWithText(ActionTile, '解密知识卡片'));
+
+      expect(openRect.height, moreOrLessEquals(createRect.height));
+      expect(openRect.width, moreOrLessEquals(createRect.width));
+      expect(createRect.height, greaterThanOrEqualTo(120));
     });
 
-    testWidgets('两个按钮之间应有间距', (WidgetTester tester) async {
-      // 构建包含 ActionButtons 的测试 Widget
+    testWidgets('两张操作卡之间应有至少 12 的间距', (WidgetTester tester) async {
       await tester.pumpWidget(createTestableWidget());
       await tester.pumpAndSettle();
 
-      // 获取两个按钮的位置
-      final createButton = find.text('发布知识卡片');
-      final openButton = find.text('解密知识卡片');
+      final createRect = tester.getRect(find.widgetWithText(ActionTile, '发布知识卡片'));
+      final openRect = tester.getRect(find.widgetWithText(ActionTile, '解密知识卡片'));
 
-      final createRect = tester.getRect(createButton);
-      final openRect = tester.getRect(openButton);
-
-      // 验证第二个按钮在第一个按钮下方
-      expect(openRect.top, greaterThan(createRect.bottom));
+      expect(openRect.left - createRect.right, greaterThanOrEqualTo(12));
     });
 
-    testWidgets('按钮应有合适的样式配置', (WidgetTester tester) async {
-      // 构建包含 ActionButtons 的测试 Widget
+    testWidgets('配色：发布为主入口（primary），解密为次入口（tertiary）',
+        (WidgetTester tester) async {
       await tester.pumpWidget(createTestableWidget());
       await tester.pumpAndSettle();
 
-      // 获取"发布知识卡片"对应的 NeumorphicButton 实例
-      final createButton = tester.widget<NeumorphicButton>(
-        find.widgetWithText(NeumorphicButton, '发布知识卡片'),
+      final createTile = tester.widget<ActionTile>(
+        find.widgetWithText(ActionTile, '发布知识卡片'),
+      );
+      final openTile = tester.widget<ActionTile>(
+        find.widgetWithText(ActionTile, '解密知识卡片'),
       );
 
-      // 验证按钮样式已配置为主按钮
-      expect(createButton.style, NeumorphicButtonStyle.primary);
+      expect(createTile.tone, ActionTileTone.primary);
+      expect(openTile.tone, ActionTileTone.tertiary);
+    });
+
+    testWidgets('窄屏（320 宽）下两列布局不溢出', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(createTestableWidget());
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(ActionTile), findsNWidgets(2));
+    });
+
+    testWidgets('语义：每张操作卡是一个带标题的按钮', (WidgetTester tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(createTestableWidget());
+      await tester.pumpAndSettle();
+
+      for (final label in ['发布知识卡片', '解密知识卡片']) {
+        // 标题与说明合并为同一个按钮节点，读屏先读标题
+        final data =
+            tester.getSemantics(find.widgetWithText(ActionTile, label)).getSemanticsData();
+        expect(data.label, startsWith(label), reason: label);
+        expect(data.flagsCollection.isButton, isTrue, reason: label);
+        expect(data.hasAction(SemanticsAction.tap), isTrue, reason: label);
+      }
+      handle.dispose();
     });
   });
 
@@ -263,14 +282,14 @@ void main() {
       await tester.pumpWidget(createTestableWidget());
       await tester.pumpAndSettle();
 
-      // 获取第一个 NeumorphicButton 实例（"发布知识卡片"按钮）
-      final firstButton = tester.widget<NeumorphicButton>(
-        find.widgetWithText(NeumorphicButton, '发布知识卡片'),
+      // 获取"发布知识卡片"操作卡
+      final firstButton = tester.widget<ActionTile>(
+        find.widgetWithText(ActionTile, '发布知识卡片'),
       );
 
-      // 获取第二个 NeumorphicButton 实例（"解密知识卡片"按钮）
-      final secondButton = tester.widget<NeumorphicButton>(
-        find.widgetWithText(NeumorphicButton, '解密知识卡片'),
+      // 获取"解密知识卡片"操作卡
+      final secondButton = tester.widget<ActionTile>(
+        find.widgetWithText(ActionTile, '解密知识卡片'),
       );
 
       // 验证 onPressed 不为 null

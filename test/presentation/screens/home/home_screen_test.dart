@@ -230,7 +230,9 @@ void main() {
         expect(welcomeRect.top, greaterThan(logoRect.bottom));
         expect(subtitleRect.top, greaterThan(welcomeRect.bottom));
         expect(createButtonRect.top, greaterThan(subtitleRect.bottom));
-        expect(openButtonRect.top, greaterThan(createButtonRect.bottom));
+        // 两个操作卡左右并排：解密在发布右侧，顶部对齐
+        expect(openButtonRect.top, moreOrLessEquals(createButtonRect.top));
+        expect(openButtonRect.left, greaterThan(createButtonRect.right));
         expect(dropZoneRect.top, greaterThan(openButtonRect.bottom));
       } finally {
         debugDefaultTargetPlatformOverride = null;
