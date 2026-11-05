@@ -29,11 +29,9 @@ class HelpDialog extends StatelessWidget {
             elevation: 0,
             title: Text(
               '使用教程',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: tokens.textPrimary,
-              ),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: tokens.textPrimary,
+                  ),
             ),
             leading: NeumorphicIconButton(
               icon: StrawIcons.close,
@@ -155,11 +153,11 @@ class HelpDialog extends StatelessWidget {
       );
     }
 
-    // Desktop Dialog style
+    // Desktop Dialog style（M3 对话框：surfaceContainerHigh 底、32 圆角）
     return Dialog(
-      backgroundColor: tokens.surface,
+      backgroundColor: tokens.surfaceContainerHigh,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+        borderRadius: BorderRadius.circular(32),
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 500),
@@ -174,21 +172,19 @@ class HelpDialog extends StatelessWidget {
                 children: [
                   NeumorphicIcon(
                     StrawIcons.info,
-                    size: 22,
+                    size: 24,
                     color: tokens.inkPrimary,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Text(
                     '使用教程',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: tokens.textPrimary,
-                    ),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: tokens.textPrimary,
+                        ),
                   ),
                 ],
               ),
-              SizedBox(height: tokens.spaceSm),
+              SizedBox(height: tokens.spaceMd),
               // 教程内容
               Flexible(
                 child: SingleChildScrollView(
@@ -302,36 +298,42 @@ class HelpDialog extends StatelessWidget {
     String icon,
   ) {
     final tokens = NeumorphicTokens.ofContext(context);
+    final textTheme = Theme.of(context).textTheme;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 2),
+        // 图标：primaryContainer 色调圆形底
+        Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: tokens.inkWash,
+            shape: BoxShape.circle,
+          ),
           child: NeumorphicIcon(
             icon,
             size: 20,
-            color: tokens.inkPrimary,
+            color: tokens.onPrimaryContainer,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 8),
               Text(
                 title,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                style: textTheme.titleMedium?.copyWith(
                   color: tokens.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 content,
-                style: TextStyle(
-                  fontSize: 13,
+                style: textTheme.bodyMedium?.copyWith(
                   color: tokens.textSecondary,
                   height: 1.5,
                 ),
@@ -347,37 +349,36 @@ class HelpDialog extends StatelessWidget {
   Widget _buildRepoHeader(BuildContext context) {
     final tokens = NeumorphicTokens.ofContext(context);
 
+    // 色调卡片：secondaryContainer 底、16 圆角
     return NeumorphicContainer(
       shape: NeumorphicShape.flat,
-      color: tokens.surfaceAlt,
-      borderRadius: tokens.radiusSmall,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      color: tokens.secondaryContainer,
+      borderRadius: tokens.radiusMedium,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           NeumorphicIcon(
             StrawIcons.info,
-            size: 18,
-            color: tokens.inkSecondary,
+            size: 20,
+            color: tokens.onSecondaryContainer,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'GitHub 仓库',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: tokens.textPrimary,
-                  ),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: tokens.onSecondaryContainer,
+                      ),
                 ),
                 const SizedBox(height: 2),
                 SelectableText(
                   'https://github.com/wuqimotou/StrawHut',
                   style: TextStyle(
                     fontSize: 12,
-                    color: tokens.inkSecondary,
+                    color: tokens.onSecondaryContainer,
                     fontFamily: 'monospace',
                   ),
                 ),

@@ -41,31 +41,29 @@ class ActionButtons extends ConsumerWidget {
   /// - 按钮之间有足够的间距
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isMobile = !kIsWeb &&
-        (defaultTargetPlatform == TargetPlatform.android ||
-            defaultTargetPlatform == TargetPlatform.iOS);
-    final minHeight = isMobile ? 56.0 : 48.0;
+    // 规范：expanded 主 CTA 最小高度 56（全平台）；两按钮等高，保持视觉一致
+    const minHeight = 56.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // "发布知识卡片"：主 CTA（墨色填充）
+        // "发布知识卡片"：主 CTA（primary 填充药丸）
         NeumorphicButton(
           label: '发布知识卡片',
           icon: StrawIcons.plusCircle,
           style: NeumorphicButtonStyle.primary,
           expanded: true,
-          minimumSize: Size(double.infinity, minHeight),
+          minimumSize: const Size(double.infinity, minHeight),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
           onPressed: () => _onCreateNewCard(context),
         ),
-        const SizedBox(height: 16),
-        // "解密知识卡片"：次级 CTA（软质凸起）
+        const SizedBox(height: 12),
+        // "解密知识卡片"：次级 CTA（色调填充）
         NeumorphicButton(
           label: '解密知识卡片',
           icon: StrawIcons.folderOpen,
           expanded: true,
-          minimumSize: Size(double.infinity, minHeight),
+          minimumSize: const Size(double.infinity, minHeight),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
           onPressed: () => _onOpenCard(context, ref),
         ),
@@ -90,19 +88,20 @@ class ActionButtons extends ConsumerWidget {
     }
   }
 
-  /// 桌面端：弹出软质选择对话框
+  /// 桌面端：弹出选择对话框（M3 对话框：surfaceContainerHigh 底、32 圆角）
   ///
-  /// 约束：两个选项 UI 权重一致（都用 secondary 软质按钮），
+  /// 约束：两个选项 UI 权重一致（都用 secondary 色调按钮），
   /// 垂直排列在底部，宽度增加。
   void _showCreateOptionsDesktop(BuildContext context) {
     final tokens = NeumorphicTokens.ofContext(context);
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
+        final textTheme = Theme.of(dialogContext).textTheme;
         return Dialog(
-          backgroundColor: tokens.surface,
+          backgroundColor: tokens.surfaceContainerHigh,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+            borderRadius: BorderRadius.circular(_kDialogRadius),
           ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 380),
@@ -114,17 +113,14 @@ class ActionButtons extends ConsumerWidget {
                 children: [
                   Text(
                     '发布知识卡片',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                    style: textTheme.headlineSmall?.copyWith(
                       color: tokens.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     '请选择内容来源：',
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: textTheme.bodyMedium?.copyWith(
                       color: tokens.textSecondary,
                     ),
                   ),
@@ -172,31 +168,29 @@ class ActionButtons extends ConsumerWidget {
     );
   }
 
-  /// 移动端：弹出底部软质选择框
+  /// 移动端：弹出底部选择面板（surfaceContainerLow 底、32 顶部圆角）
   ///
   /// 约束：两个 ListTile 权重一致，垂直排列。
   void _showCreateOptionsMobile(BuildContext context) {
     final tokens = NeumorphicTokens.ofContext(context);
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: tokens.surface,
-      shape: RoundedRectangleBorder(
+      backgroundColor: tokens.surfaceContainerLow,
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(tokens.radiusXLarge),
+          top: Radius.circular(_kDialogRadius),
         ),
       ),
       builder: (sheetContext) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.only(bottom: 12),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const _SheetHandle(),
                 ListTile(
-                  leading: NeumorphicIcon(
-                    StrawIcons.editNote,
-                    color: tokens.textPrimary,
-                  ),
+                  leading: const _TonalLeadingIcon(StrawIcons.editNote),
                   title: const Text('富文本编辑'),
                   subtitle: const Text('在编辑器中创作内容后发布'),
                   onTap: () {
@@ -205,10 +199,7 @@ class ActionButtons extends ConsumerWidget {
                   },
                 ),
                 ListTile(
-                  leading: NeumorphicIcon(
-                    StrawIcons.uploadFile,
-                    color: tokens.textPrimary,
-                  ),
+                  leading: const _TonalLeadingIcon(StrawIcons.uploadFile),
                   title: const Text('直接加密文件'),
                   subtitle: const Text('选择文件直接加密，无需编辑'),
                   onTap: () {
@@ -248,29 +239,27 @@ class ActionButtons extends ConsumerWidget {
     }
   }
 
-  /// 在 Android 上弹出文件来源选择软质底部框
+  /// 在 Android 上弹出文件来源选择底部面板（32 顶部圆角）
   void _showOpenCardOptions(BuildContext context, WidgetRef ref) {
     final tokens = NeumorphicTokens.ofContext(context);
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: tokens.surface,
-      shape: RoundedRectangleBorder(
+      backgroundColor: tokens.surfaceContainerLow,
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(tokens.radiusXLarge),
+          top: Radius.circular(_kDialogRadius),
         ),
       ),
       builder: (BuildContext sheetContext) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.only(bottom: 12),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const _SheetHandle(),
                 ListTile(
-                  leading: NeumorphicIcon(
-                    StrawIcons.image,
-                    color: tokens.textPrimary,
-                  ),
+                  leading: const _TonalLeadingIcon(StrawIcons.image),
                   title: const Text('从相册加载'),
                   subtitle: const Text('选择 .png 格式的加密知识卡片图片'),
                   onTap: () {
@@ -281,10 +270,7 @@ class ActionButtons extends ConsumerWidget {
                   },
                 ),
                 ListTile(
-                  leading: NeumorphicIcon(
-                    StrawIcons.folderOpen,
-                    color: tokens.textPrimary,
-                  ),
+                  leading: const _TonalLeadingIcon(StrawIcons.folderOpen),
                   title: const Text('从文件系统加载'),
                   subtitle: const Text('选择 .straw 或 .png 文件'),
                   onTap: () {
@@ -359,5 +345,57 @@ class ActionButtons extends ConsumerWidget {
         context.go('/reader?path=${Uri.encodeComponent(fileName)}');
       }
     }
+  }
+}
+
+/// 对话框/底部面板圆角（规范：对话框四角 32，底部面板顶部 32）
+const double _kDialogRadius = 32;
+
+/// 底部面板顶部的装饰性拖动指示条（纯视觉，不参与交互与语义）
+class _SheetHandle extends StatelessWidget {
+  const _SheetHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = NeumorphicTokens.ofContext(context);
+    return ExcludeSemantics(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 16, bottom: 12),
+        child: Container(
+          width: 32,
+          height: 4,
+          decoration: BoxDecoration(
+            color: tokens.textHint.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 底部面板列表项的前导图标：secondaryContainer 色调圆形底 + onSecondaryContainer 图标
+class _TonalLeadingIcon extends StatelessWidget {
+  const _TonalLeadingIcon(this.icon);
+
+  final String icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = NeumorphicTokens.ofContext(context);
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: tokens.secondaryContainer,
+        shape: BoxShape.circle,
+      ),
+      child: NeumorphicIcon(
+        icon,
+        size: 20,
+        color: tokens.onSecondaryContainer,
+      ),
+    );
   }
 }
