@@ -172,6 +172,22 @@ void navigateToReader(WidgetTester tester, String filePath) {
   appRouter.go('/reader?path=$filePath');
 }
 
+
+/// 等待由 widget 代码（运行在测试的 fake-async zone 中）发起的真实文件 I/O 完成
+///
+/// TempFileManager.deleteTempFile 的 `exists()` / `delete()` 是真实 I/O，
+/// 但其后续回调要在 fake-async zone 被 pump 时才会继续执行。只在 runAsync
+/// 中等待真实时间而不 pump，删除会停在中途，结果取决于时序（曾导致偶发失败）。
+/// 因此交替进行：真实等待一小段时间 → pump，直到 [done] 为真或超时（约 1 秒）。
+Future<void> settleFileIo(WidgetTester tester, bool Function() done) async {
+  for (var i = 0; i < 20 && !done(); i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+  }
+}
+
 void main() {
   // 注册 mocktail 的 fallback 值
   setUpAll(() {
@@ -1029,12 +1045,7 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       await tester.pump();
       // 与 paused 阶段相同的等待方式：若此时会删除，这里足以让删除完成
-      await tester.runAsync(() async {
-        for (var i = 0; i < 20 && File(outputPath!).existsSync(); i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 50));
-        }
-      });
-      await tester.pump();
+      await settleFileIo(tester, () => !File(outputPath!).existsSync());
       expect(File(outputPath!).existsSync(), isTrue);
       expect(find.byTooltip('保存文件'), findsOneWidget);
 
@@ -1042,12 +1053,7 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       await tester.pump();
-      await tester.runAsync(() async {
-        for (var i = 0; i < 20 && File(outputPath!).existsSync(); i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 50));
-        }
-      });
-      await tester.pump();
+      await settleFileIo(tester, () => !File(outputPath!).existsSync());
       expect(File(outputPath!).existsSync(), isFalse);
       expect(find.byTooltip('保存文件'), findsNothing);
       expect(find.byType(MetaPreview), findsOneWidget);
