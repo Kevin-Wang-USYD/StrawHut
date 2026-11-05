@@ -40,28 +40,34 @@ class ExportOptions extends StatelessWidget {
   /// 构建导出选项 UI
   ///
   /// 布局结构：
-  /// - NeumorphicContainer（凹槽背景）
+  /// - NeumorphicContainer（色调选项卡：未勾选 surfaceContainer，勾选 secondaryContainer）
   ///   - Row
   ///     - NeumorphicIcon（密钥图标）
   ///     - Expanded（标题 + 副标题）
-  ///     - Checkbox（Neumorphic tokens 配色）
+  ///     - Checkbox（M3 主题配色）
   @override
   Widget build(BuildContext context) {
     final tokens = NeumorphicTokens.ofContext(context);
+    final foreground = value ? tokens.onSecondaryContainer : tokens.textPrimary;
 
     return NeumorphicContainer(
       shape: NeumorphicShape.flat,
-      color: tokens.surfaceAlt,
-      borderRadius: tokens.radiusSmall,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      color: value ? tokens.secondaryContainer : tokens.surfaceAlt,
+      borderRadius: tokens.radiusMedium,
+      padding: EdgeInsets.only(
+        left: tokens.spaceMd,
+        right: tokens.spaceXs,
+        top: tokens.spaceSm,
+        bottom: tokens.spaceSm,
+      ),
       child: Row(
         children: [
           NeumorphicIcon(
             StrawIcons.password,
             size: 20,
-            color: tokens.inkSecondary,
+            color: value ? tokens.onSecondaryContainer : tokens.inkPrimary,
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: tokens.spaceSm + tokens.spaceXs),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,8 +77,9 @@ class ExportOptions extends StatelessWidget {
                   '导出 .key 文件',
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: tokens.textPrimary,
+                    height: 20 / 14,
+                    fontWeight: FontWeight.w700,
+                    color: foreground,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -80,7 +87,10 @@ class ExportOptions extends StatelessWidget {
                   '密钥文件可单独保存和传输，建议与 .straw 文件分开保管',
                   style: TextStyle(
                     fontSize: 12,
-                    color: tokens.textSecondary,
+                    height: 16 / 12,
+                    color: value
+                        ? tokens.onSecondaryContainer
+                        : tokens.textSecondary,
                   ),
                 ),
               ],
@@ -90,8 +100,8 @@ class ExportOptions extends StatelessWidget {
             value: value,
             onChanged: onChanged,
             activeColor: tokens.inkPrimary,
-            checkColor: tokens.surface,
-            side: BorderSide(color: tokens.surfaceAlt, width: 1.5),
+            checkColor: tokens.onPrimary,
+            side: BorderSide(color: tokens.textSecondary, width: 2),
           ),
         ],
       ),

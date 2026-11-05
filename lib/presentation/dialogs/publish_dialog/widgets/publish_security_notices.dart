@@ -28,6 +28,11 @@ class PublishSecurityNotices extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final tokens = NeumorphicTokens.ofContext(context);
+    // 警示色调块：warning 10% 叠加在 surfaceContainer 上，文字仍为 warning 色（≥ 4.5:1）
+    final warningTone = Color.alphaBlend(
+      tokens.warning.withValues(alpha: 0.10),
+      tokens.surfaceAlt,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -35,9 +40,9 @@ class PublishSecurityNotices extends StatelessWidget {
         if (exportFormat == 'png') ...[
           NeumorphicContainer(
             shape: NeumorphicShape.flat,
-            color: tokens.surfaceAlt,
-            borderRadius: tokens.radiusSmall,
-            padding: const EdgeInsets.all(12),
+            color: warningTone,
+            borderRadius: tokens.radiusMedium,
+            padding: EdgeInsets.all(tokens.spaceSm + tokens.spaceXs),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -46,12 +51,13 @@ class PublishSecurityNotices extends StatelessWidget {
                   size: 18,
                   color: tokens.warning,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: tokens.spaceSm),
                 Expanded(
                   child: Text(
                     l10n.shareAsOriginalImage,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 14,
+                      height: 20 / 14,
                       color: tokens.warning,
                     ),
                   ),
@@ -62,11 +68,10 @@ class PublishSecurityNotices extends StatelessWidget {
           SizedBox(height: tokens.spaceMd),
         ],
         if (isNegotiated)
-          NeumorphicContainer(
+          NeumorphicContainer.large(
             shape: NeumorphicShape.flat,
-            color: tokens.surfaceAlt,
-            borderRadius: tokens.radiusSmall,
-            padding: const EdgeInsets.all(12),
+            color: tokens.inkWash,
+            padding: EdgeInsets.all(tokens.spaceMd),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -76,41 +81,49 @@ class PublishSecurityNotices extends StatelessWidget {
                     NeumorphicIcon(
                       StrawIcons.publish,
                       size: 20,
-                      color: tokens.inkPrimary,
+                      color: tokens.onPrimaryContainer,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: tokens.spaceSm),
                     Expanded(
                       child: Text(
                         l10n.passphraseShareNote,
                         style: TextStyle(
                           fontSize: 14,
-                          color: tokens.textPrimary,
-                          fontWeight: FontWeight.w500,
+                          height: 20 / 14,
+                          color: tokens.onPrimaryContainer,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    NeumorphicIcon(
-                      StrawIcons.warning,
-                      size: 20,
-                      color: tokens.warning,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        l10n.passphraseSecurityNote,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: tokens.warning,
+                SizedBox(height: tokens.spaceSm + tokens.spaceXs),
+                NeumorphicContainer(
+                  shape: NeumorphicShape.flat,
+                  color: tokens.surface,
+                  borderRadius: tokens.radiusMedium,
+                  padding: EdgeInsets.all(tokens.spaceSm + tokens.spaceXs),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      NeumorphicIcon(
+                        StrawIcons.warning,
+                        size: 20,
+                        color: tokens.warning,
+                      ),
+                      SizedBox(width: tokens.spaceSm),
+                      Expanded(
+                        child: Text(
+                          l10n.passphraseSecurityNote,
+                          style: TextStyle(
+                            fontSize: 14,
+                            height: 20 / 14,
+                            color: tokens.warning,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),

@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use, Flutter 3.32 弃用 RadioListTile.groupValue/onChanged，待 RadioGroup 祖先 API 普及后统一迁移
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -12,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:media_scanner/media_scanner.dart';
+import 'package:strawhut/app/motion.dart';
 import 'package:strawhut/app/neumorphic_tokens.dart';
 import 'package:strawhut/core/crypto/crypto_constants.dart';
 import 'package:strawhut/core/crypto/crypto_models.dart';
@@ -30,6 +30,8 @@ import 'package:strawhut/presentation/dialogs/publish_dialog/widgets/export_opti
 import 'package:strawhut/presentation/dialogs/publish_dialog/widgets/key_display.dart';
 import 'package:strawhut/presentation/dialogs/publish_dialog/widgets/meta_form.dart';
 import 'package:strawhut/presentation/dialogs/publish_dialog/widgets/passphrase_input.dart';
+import 'package:strawhut/presentation/dialogs/publish_dialog/widgets/publish_choice_group.dart';
+import 'package:strawhut/presentation/dialogs/publish_dialog/widgets/publish_progress_sheet.dart';
 import 'package:strawhut/presentation/dialogs/publish_dialog/widgets/publish_security_notices.dart';
 import 'package:strawhut/presentation/providers/crypto_provider.dart';
 import 'package:strawhut/presentation/providers/editor_provider.dart';
@@ -394,14 +396,14 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
       context: context,
       barrierDismissible: false,
       builder: (context) => Dialog(
-        backgroundColor: tokens.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+        backgroundColor: tokens.surfaceContainerHigh,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(_kDialogRadius)),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -414,8 +416,9 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
                       child: Text(
                         title,
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 22,
+                          height: 28 / 22,
+                          fontWeight: FontWeight.w700,
                           color: tokens.textPrimary,
                         ),
                       ),
@@ -527,14 +530,14 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
         final shouldProceed = await showDialog<bool>(
           context: context,
           builder: (context) => Dialog(
-            backgroundColor: tokens.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+            backgroundColor: tokens.surfaceContainerHigh,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(_kDialogRadius)),
             ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -551,8 +554,9 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
                           child: Text(
                             '内容过大提示',
                             style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 22,
+                              height: 28 / 22,
+                              fontWeight: FontWeight.w700,
                               color: tokens.textPrimary,
                             ),
                           ),
@@ -969,14 +973,14 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
       context: context,
       barrierDismissible: false,
       builder: (context) => Dialog(
-        backgroundColor: tokens.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+        backgroundColor: tokens.surfaceContainerHigh,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(_kDialogRadius)),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -993,8 +997,9 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
                       child: Text(
                         l10n.weakPassphraseTitle,
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 22,
+                          height: 28 / 22,
+                          fontWeight: FontWeight.w700,
                           color: tokens.textPrimary,
                         ),
                       ),
@@ -1036,7 +1041,7 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
                       child: Text(
                         l10n.passphraseWeakSuggestion,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           color: tokens.inkSecondary,
                         ),
                       ),
@@ -1047,7 +1052,7 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
                 Text(
                   l10n.passphraseWeakConfirm,
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     fontSize: 14,
                     color: tokens.textPrimary,
                   ),
@@ -1090,14 +1095,14 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
       context: context,
       barrierDismissible: false,
       builder: (context) => Dialog(
-        backgroundColor: tokens.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+        backgroundColor: tokens.surfaceContainerHigh,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(_kDialogRadius)),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1114,8 +1119,9 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
                       child: Text(
                         l10n.pngOriginalImageConfirmTitle,
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 22,
+                          height: 28 / 22,
+                          fontWeight: FontWeight.w700,
                           color: tokens.textPrimary,
                         ),
                       ),
@@ -1136,7 +1142,7 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
                       child: Text(
                         l10n.pngOriginalImageConfirmBody,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           color: tokens.warning,
                         ),
                       ),
@@ -1180,14 +1186,14 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
     return showDialog<bool>(
       context: context,
       builder: (context) => Dialog(
-        backgroundColor: tokens.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+        backgroundColor: tokens.surfaceContainerHigh,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(_kDialogRadius)),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1204,8 +1210,9 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
                       child: Text(
                         l10n.saveAfterPublish,
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 22,
+                          height: 28 / 22,
+                          fontWeight: FontWeight.w700,
                           color: tokens.textPrimary,
                         ),
                       ),
@@ -1367,13 +1374,13 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
             NeumorphicIcon(
               StrawIcons.error,
               size: 20,
-              color: tokens.surface,
+              color: tokens.errorContainer,
             ),
             const SizedBox(width: 8),
             Flexible(child: Text(message)),
           ],
         ),
-        backgroundColor: tokens.error,
+        backgroundColor: tokens.inverseSurface,
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
       ),
@@ -1394,13 +1401,13 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
             NeumorphicIcon(
               StrawIcons.check,
               size: 20,
-              color: tokens.surface,
+              color: tokens.inversePrimary,
             ),
             const SizedBox(width: 8),
             Flexible(child: Text(message)),
           ],
         ),
-        backgroundColor: tokens.success,
+        backgroundColor: tokens.inverseSurface,
         duration: const Duration(seconds: 5),
         behavior: SnackBarBehavior.floating,
       ),
@@ -1436,64 +1443,88 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
 
     // 否则显示元信息表单界面
     return Dialog(
-      backgroundColor: tokens.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+      backgroundColor: tokens.surfaceContainerHigh,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(_kDialogRadius)),
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: min(520, MediaQuery.sizeOf(context).width * 0.9),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(tokens.spaceLg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 标题
+              // 标题：primaryContainer 圆形徽标 + headline
               Row(
                 children: [
-                  NeumorphicIcon(
-                    StrawIcons.publish,
-                    size: 22,
-                    color: tokens.inkPrimary,
+                  _toneBadge(
+                    icon: StrawIcons.publish,
+                    background: tokens.inkWash,
+                    foreground: tokens.onPrimaryContainer,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: tokens.spaceSm + tokens.spaceXs),
                   Flexible(
                     child: Text(
                       '发布知识卡片',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 24,
+                        height: 32 / 24,
+                        fontWeight: FontWeight.w800,
                         color: tokens.textPrimary,
                       ),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: tokens.spaceMd),
-              Flexible(child: _buildFormContent(l10n)),
-              SizedBox(height: tokens.spaceMd),
-              // 操作按钮
+              SizedBox(height: tokens.spaceLg),
+              // 表单 + 加密进行中的玻璃进度浮层（浮层不拦截任何点击）
+              Flexible(
+                child: Stack(
+                  children: [
+                    _buildFormContent(l10n),
+                    if (_isLoading)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: tokens.spaceSm,
+                        child: IgnorePointer(
+                          child: PublishProgressSheet(
+                            progress: _encryptProgress,
+                            cancelling: _isCancelling,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              SizedBox(height: tokens.spaceLg),
+              // 操作按钮：取消（色调）+ 主 CTA（56px 填充药丸）
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   NeumorphicButton(
                     label: l10n.cancel,
+                    minimumSize: const Size(96, _kHeroCtaHeight),
                     onPressed: _isCancelling ? null : _handleCancel,
                   ),
-                  const SizedBox(width: 12),
-                  NeumorphicButton(
-                    label: _isLoading
-                        ? (_isCancelling
-                            ? '取消中...'
-                            : _encryptProgress > 0
-                                ? '${(_encryptProgress * 100).toInt()}%'
-                                : '加密中...')
-                        : '生成并加密',
-                    style: NeumorphicButtonStyle.primary,
-                    icon: _isLoading ? null : StrawIcons.publish,
-                    onPressed: _isLoading ? null : _handlePublish,
+                  SizedBox(width: tokens.spaceSm + tokens.spaceXs),
+                  Expanded(
+                    child: NeumorphicButton(
+                      label: _isLoading
+                          ? (_isCancelling
+                              ? '取消中...'
+                              : _encryptProgress > 0
+                                  ? '${(_encryptProgress * 100).toInt()}%'
+                                  : '加密中...')
+                          : '生成并加密',
+                      style: NeumorphicButtonStyle.primary,
+                      icon: _isLoading ? null : StrawIcons.publish,
+                      expanded: true,
+                      busy: _isLoading,
+                      onPressed: _isLoading ? null : _handlePublish,
+                    ),
                   ),
                 ],
               ),
@@ -1511,47 +1542,21 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
     final pickedFile = ref.watch(pickedFileProvider);
 
     return SingleChildScrollView(
-      // 水平 padding 为凹陷软槽的两侧外阴影留出完整渐变空间，
-      // 阴影作用范围 ≈ offset(4) + blur(8) ≈ 12px，需全部容纳以避免截断
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      // 两侧留白：为桌面端滚动条留出位置，避免压在连接按钮组上
+      padding: EdgeInsets.symmetric(
+        horizontal: tokens.spaceSm + tokens.spaceXs,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // ===== 内容来源选择（仅从编辑器进入时显示） =====
           if (!_isContentSourceLocked) ...[
-            Text(
-              l10n.contentSourceLabel,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: tokens.textPrimary,
-              ),
-            ),
-            SizedBox(height: tokens.spaceXs),
-            SegmentedButton<ContentSourceMode>(
-              segments: [
-                ButtonSegment<ContentSourceMode>(
-                  value: ContentSourceMode.editor,
-                  label: Text(l10n.editorContentLabel),
-                  icon: NeumorphicIcon(
-                    StrawIcons.editNote,
-                    size: 18,
-                    color: tokens.textSecondary,
-                  ),
-                ),
-                ButtonSegment<ContentSourceMode>(
-                  value: ContentSourceMode.fileUpload,
-                  label: Text(l10n.fileUploadLabel),
-                  icon: NeumorphicIcon(
-                    StrawIcons.uploadFile,
-                    size: 18,
-                    color: tokens.textSecondary,
-                  ),
-                ),
-              ],
-              selected: {_contentSourceMode},
-              onSelectionChanged: (selection) {
-                final mode = selection.first;
+            _sectionLabel(tokens, l10n.contentSourceLabel),
+            _contentSourceGroup(
+              l10n: l10n,
+              selected: _contentSourceMode,
+              onSelected: (mode) {
                 setState(() {
                   _contentSourceMode = mode;
                   if (mode == ContentSourceMode.editor) {
@@ -1576,13 +1581,13 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
 
           // 文件选择区域（仅文件上传模式显示）
           if (_contentSourceMode == ContentSourceMode.fileUpload) ...[
-            SizedBox(height: tokens.spaceSm),
+            SizedBox(height: tokens.spaceSm + tokens.spaceXs),
             _buildFilePickerArea(pickedFile),
           ],
 
-          SizedBox(height: tokens.spaceSm),
+          SizedBox(height: tokens.spaceMd),
           Divider(height: 1, color: tokens.divider),
-          SizedBox(height: tokens.spaceSm),
+          SizedBox(height: tokens.spaceMd),
 
           // 使用 MetaForm 组件替换内联表单代码
           MetaForm(
@@ -1590,221 +1595,68 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
             // 表单变化回调（当前无需特殊处理）
             onChanged: () {},
           ),
-          SizedBox(height: tokens.spaceSm),
+          SizedBox(height: tokens.spaceMd),
           Divider(height: 1, color: tokens.divider),
-          SizedBox(height: tokens.spaceSm),
+          SizedBox(height: tokens.spaceMd),
 
-          // 加密模式选择
-          Text(
-            l10n.encryptionModeLabel,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: tokens.textPrimary,
-            ),
-          ),
-          RadioListTile<String>(
-            title: Text(
-              l10n.randomKeyMode,
-              style: TextStyle(color: tokens.textPrimary),
-            ),
-            subtitle: Text(
-              l10n.randomKeyModeDesc,
-              style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-            ),
-            value: 'random',
-            groupValue: _encryptionMode,
-            onChanged: (value) =>
-                setState(() => _encryptionMode = value ?? 'random'),
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            dense: true,
-            activeColor: tokens.inkPrimary,
-          ),
-          RadioListTile<String>(
-            title: Text(
-              l10n.negotiatedKeyMode,
-              style: TextStyle(color: tokens.textPrimary),
-            ),
-            subtitle: Text(
-              l10n.negotiatedKeyModeDesc,
-              style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-            ),
-            value: 'negotiated',
-            groupValue: _encryptionMode,
-            onChanged: (value) =>
-                setState(() => _encryptionMode = value ?? 'random'),
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            dense: true,
-            activeColor: tokens.inkPrimary,
+          // 加密模式选择（连接按钮组）
+          _sectionLabel(tokens, l10n.encryptionModeLabel),
+          _encryptionModeGroup(
+            l10n: l10n,
+            selected: _encryptionMode,
+            onSelected: (value) => setState(() => _encryptionMode = value),
           ),
 
           // 协商密钥模式：显示暗号输入组件
           if (_encryptionMode == 'negotiated') ...[
-            SizedBox(height: tokens.spaceSm),
+            SizedBox(height: tokens.spaceMd),
             PassphraseInput(key: _passphraseInputKey),
-            SizedBox(height: tokens.spaceSm),
-            Divider(height: 1, color: tokens.divider),
-          ] else ...[
-            SizedBox(height: tokens.spaceSm),
-            Divider(height: 1, color: tokens.divider),
           ],
+          SizedBox(height: tokens.spaceMd),
+          Divider(height: 1, color: tokens.divider),
+          SizedBox(height: tokens.spaceMd),
 
-          SizedBox(height: tokens.spaceSm),
           // Export format selection
           // 文件上传模式下只能选择 .straw，隐藏格式选择
           if (!kIsWeb && _contentSourceMode == ContentSourceMode.editor) ...[
-            Text(
-              '导出格式：',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: tokens.textPrimary,
-              ),
-            ),
-            RadioListTile<String>(
-              title: Text(
-                '.straw 文件',
-                style: TextStyle(color: tokens.textPrimary),
-              ),
-              subtitle: Text(
-                '标准加密知识卡片文件，适合桌面端',
-                style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-              ),
-              value: 'straw',
-              groupValue: _exportFormat,
-              onChanged: (value) =>
-                  setState(() => _exportFormat = value ?? 'straw'),
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              dense: true,
-              activeColor: tokens.inkPrimary,
-            ),
-            RadioListTile<String>(
-              title: Text(
-                '.png 图片',
-                style: TextStyle(color: tokens.textPrimary),
-              ),
-              subtitle: Text(
-                '封面图内嵌加密数据，适合移动端分享',
-                style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-              ),
-              value: 'png',
-              groupValue: _exportFormat,
-              onChanged: (value) =>
-                  setState(() => _exportFormat = value ?? 'straw'),
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              dense: true,
-              activeColor: tokens.inkPrimary,
+            _sectionLabel(tokens, '导出格式：'),
+            _exportFormatGroup(
+              selected: _exportFormat,
+              onSelected: (value) => setState(() => _exportFormat = value),
             ),
           ],
 
           // 文件上传模式下显示固定格式提示
           if (!kIsWeb &&
               _contentSourceMode == ContentSourceMode.fileUpload) ...[
-            Text(
-              '导出格式：',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: tokens.textPrimary,
-              ),
-            ),
-            ListTile(
-              leading: NeumorphicIcon(
-                StrawIcons.document,
-                size: 20,
-                color: tokens.textSecondary,
-              ),
-              title: Text(
-                '.straw 文件',
-                style: TextStyle(color: tokens.textPrimary),
-              ),
-              subtitle: Text(
-                '文件加密模式仅支持 .straw 格式',
-                style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-              ),
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-            ),
+            _sectionLabel(tokens, '导出格式：'),
+            _fixedFormatNotice(tokens),
           ],
 
           if (_effectiveExportFormat == 'png') ...[
-            SizedBox(height: tokens.spaceSm),
-            Divider(height: 1, color: tokens.divider),
-            SizedBox(height: tokens.spaceXs),
-            Text(
-              '封面图片：',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: tokens.textPrimary,
-              ),
-            ),
-            SizedBox(height: tokens.spaceXs),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ChoiceChip(
-                  label: const Text('使用元信息生成'),
-                  selected: _customCoverBytes == null,
-                  onSelected: (_) => setState(() => _customCoverBytes = null),
-                  backgroundColor: tokens.surface,
-                  side: BorderSide(color: tokens.surfaceAlt),
-                  labelStyle: TextStyle(color: tokens.textPrimary),
-                  selectedColor: tokens.inkWash,
-                ),
-                SizedBox(height: tokens.spaceXs),
-                ChoiceChip(
-                  label: const Text('上传自定义图片'),
-                  selected: _customCoverBytes != null,
-                  onSelected: (_) => _pickCoverImage(),
-                  backgroundColor: tokens.surface,
-                  side: BorderSide(color: tokens.surfaceAlt),
-                  labelStyle: TextStyle(color: tokens.textPrimary),
-                  selectedColor: tokens.inkWash,
-                ),
-              ],
+            SizedBox(height: tokens.spaceMd),
+            _sectionLabel(tokens, '封面图片：'),
+            _coverChoiceChips(
+              tokens: tokens,
+              hasCustomCover: _customCoverBytes != null,
+              onUseMetaSelected: (_) =>
+                  setState(() => _customCoverBytes = null),
+              onCustomSelected: (_) => _pickCoverImage(),
             ),
             if (_customCoverBytes != null) ...[
               SizedBox(height: tokens.spaceSm),
-              NeumorphicContainer(
-                shape: NeumorphicShape.flat,
-                borderRadius: tokens.radiusSmall,
-                padding: EdgeInsets.zero,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(tokens.radiusSmall),
-                  child: SizedBox(
-                    height: 120,
-                    width: double.infinity,
-                    child: Image.memory(
-                      _customCoverBytes!,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ),
+              _coverPreview(tokens, _customCoverBytes!),
             ],
           ],
-          SizedBox(height: tokens.spaceSm),
-          Divider(height: 1, color: tokens.divider),
           // 导出密钥文件选项（仅随机密钥模式下可用）
-          if (_encryptionMode == 'random')
-            CheckboxListTile(
-              title: Text(
-                '导出 .key 文件',
-                style: TextStyle(color: tokens.textPrimary),
-              ),
-              subtitle: Text(
-                '密钥文件可单独保存和传输，建议与 .straw 文件分开保管',
-                style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-              ),
-              value: _exportKeyFile,
-              onChanged: (value) =>
-                  setState(() => _exportKeyFile = value ?? false),
-              controlAffinity: ListTileControlAffinity.leading,
-              contentPadding: EdgeInsets.zero,
-              activeColor: tokens.inkPrimary,
-              checkColor: tokens.surface,
+          if (_encryptionMode == 'random') ...[
+            SizedBox(height: tokens.spaceMd),
+            _exportKeyFileChip(
+              tokens: tokens,
+              selected: _exportKeyFile,
+              onSelected: (value) => setState(() => _exportKeyFile = value),
             ),
+          ],
         ],
       ),
     );
@@ -1818,55 +1670,16 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
       // 已选择文件 - 显示文件信息
       final warning = _getFileSizeWarning(pickedFile.fileSize);
 
-      return NeumorphicContainer(
-        shape: NeumorphicShape.flat,
-        borderRadius: tokens.radiusSmall,
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                NeumorphicIcon(
-                  StrawIcons.document,
-                  size: 20,
-                  color: tokens.inkPrimary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    pickedFile.fileName,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: tokens.textPrimary,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                NeumorphicIconButton(
-                  icon: StrawIcons.close,
-                  size: 32,
-                  iconSize: 16,
-                  onPressed: () {
-                    ref.read(pickedFileProvider.notifier).clear();
-                    // 清空标题
-                    _metaFormKey.currentState?.updateTitle('');
-                  },
-                  tooltip: '移除文件',
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '大小：${_formatFileSize(pickedFile.fileSize)}',
-              style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-            ),
-            if (warning != null) ...[
-              const SizedBox(height: 6),
-              _buildFileSizeWarningChip(warning),
-            ],
-          ],
-        ),
+      return _pickedFileCard(
+        tokens: tokens,
+        fileName: pickedFile.fileName,
+        sizeText: '大小：${_formatFileSize(pickedFile.fileSize)}',
+        onRemove: () {
+          ref.read(pickedFileProvider.notifier).clear();
+          // 清空标题
+          _metaFormKey.currentState?.updateTitle('');
+        },
+        warning: warning != null ? _buildFileSizeWarningChip(warning) : null,
       );
     }
 
@@ -1875,52 +1688,11 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
         defaultTargetPlatform != TargetPlatform.android &&
         defaultTargetPlatform != TargetPlatform.iOS;
 
-    final filePickerArea = InkWell(
+    final filePickerArea = _PublishDropZone(
+      icon: _isDragging ? StrawIcons.fileDownload : StrawIcons.cloudUpload,
+      title: _isDragging ? '释放以添加文件' : '点击选择文件 或 拖拽文件到此处',
+      highlighted: _isDragging,
       onTap: _pickFile,
-      borderRadius: BorderRadius.circular(tokens.radiusSmall),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(tokens.radiusSmall),
-          border: Border.all(
-            color: _isDragging
-                ? tokens.inkSecondary
-                : tokens.divider,
-            width: _isDragging ? 1.5 : 1,
-          ),
-        ),
-        child: NeumorphicContainer(
-          shape: _isDragging ? NeumorphicShape.concave : NeumorphicShape.flat,
-          borderRadius: tokens.radiusSmall,
-          color: _isDragging
-              ? tokens.inkWash.withValues(alpha: 0.08)
-              : tokens.surface,
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-          child: Column(
-            children: [
-              NeumorphicIcon(
-                _isDragging ? StrawIcons.fileDownload : StrawIcons.cloudUpload,
-                size: 36,
-                color: _isDragging ? tokens.inkPrimary : tokens.textSecondary,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _isDragging ? '释放以添加文件' : '点击选择文件 或 拖拽文件到此处',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: _isDragging
-                      ? tokens.inkPrimary
-                      : tokens.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '支持任意类型文件',
-                style: TextStyle(fontSize: 12, color: tokens.textHint),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
 
     if (isDesktop) {
@@ -1991,41 +1763,7 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
 
   /// 构建文件大小警告提示芯片
   Widget _buildFileSizeWarningChip(_FileSizeWarning warning) {
-    final tokens = NeumorphicTokens.ofContext(context);
-    final colors = {
-      _FileSizeWarningLevel.hint: tokens.inkSecondary,
-      _FileSizeWarningLevel.warning: tokens.warning,
-      _FileSizeWarningLevel.strongWarning: tokens.warning,
-      _FileSizeWarningLevel.severe: tokens.error,
-    };
-    final icons = {
-      _FileSizeWarningLevel.hint: StrawIcons.info,
-      _FileSizeWarningLevel.warning: StrawIcons.warning,
-      _FileSizeWarningLevel.strongWarning: StrawIcons.error,
-      _FileSizeWarningLevel.severe: StrawIcons.error,
-    };
-
-    final color = colors[warning.level]!;
-    final icon = icons[warning.level]!;
-
-    return NeumorphicContainer(
-      shape: NeumorphicShape.flat,
-      borderRadius: tokens.radiusSmall,
-      color: color.withValues(alpha: 0.08),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(
-        children: [
-          NeumorphicIcon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              warning.message,
-              style: TextStyle(fontSize: 11, color: color),
-            ),
-          ),
-        ],
-      ),
-    );
+    return _fileSizeWarningChip(NeumorphicTokens.ofContext(context), warning);
   }
 
   /// 从编辑器内容中提取首行文本
@@ -2065,71 +1803,52 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
     final isNegotiated = _encryptionMode == 'negotiated';
 
     return Dialog(
-      backgroundColor: tokens.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+      backgroundColor: tokens.surfaceContainerHigh,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(_kDialogRadius)),
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(tokens.spaceLg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 标题
+              // 标题：成功徽标（tertiary）+ headline
               Row(
                 children: [
-                  NeumorphicIcon(
-                    StrawIcons.check,
-                    size: 22,
-                    color: tokens.success,
+                  _toneBadge(
+                    icon: StrawIcons.check,
+                    background: tokens.success,
+                    foreground: tokens.onTertiary,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: tokens.spaceSm + tokens.spaceXs),
                   Flexible(
                     child: Text(
                       l10n.publishSuccessTitle,
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 24,
+                        height: 32 / 24,
+                        fontWeight: FontWeight.w800,
                         color: tokens.textPrimary,
                       ),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: tokens.spaceMd),
+              SizedBox(height: tokens.spaceLg),
               Flexible(
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 成功提示
-                      Text(
-                        l10n.publishSuccessMessage,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: tokens.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: tokens.spaceMd),
-
-                      // 文件路径信息
-                      Text(
-                        l10n.filePathLabel,
-                        style: TextStyle(
-                          color: tokens.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        _savedFilePath ?? l10n.unknownValue,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: tokens.textHint,
-                        ),
+                      // 成功提示 + 文件路径信息
+                      _publishSuccessSummary(
+                        tokens: tokens,
+                        l10n: l10n,
+                        savedFilePath: _savedFilePath,
                       ),
                       SizedBox(height: tokens.spaceMd),
                       PublishSecurityNotices(
@@ -2141,22 +1860,18 @@ class _PublishDialogState extends ConsumerState<PublishDialog> {
                   ),
                 ),
               ),
-              SizedBox(height: tokens.spaceMd),
-              // 操作按钮
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  NeumorphicButton(
-                    label: l10n.done,
-                    style: NeumorphicButtonStyle.primary,
-                    icon: StrawIcons.check,
-                    onPressed: () {
-                      Navigator.of(context).pop(); // 关闭 PublishDialog
-                      // 使用 context.go 返回首页，避免 Navigator.pop 的问题
-                      context.go('/');
-                    },
-                  ),
-                ],
+              SizedBox(height: tokens.spaceLg),
+              // 操作按钮（56px 填充药丸）
+              NeumorphicButton(
+                label: l10n.done,
+                style: NeumorphicButtonStyle.primary,
+                icon: StrawIcons.check,
+                expanded: true,
+                onPressed: () {
+                  Navigator.of(context).pop(); // 关闭 PublishDialog
+                  // 使用 context.go 返回首页，避免 Navigator.pop 的问题
+                  context.go('/');
+                },
               ),
             ],
           ),
@@ -2297,47 +2012,66 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
         title: Text(
           '发布知识卡片',
           style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontSize: 22,
+            height: 28 / 22,
+            fontWeight: FontWeight.w700,
             color: tokens.textPrimary,
           ),
         ),
         leading: NeumorphicIconButton(
           icon: StrawIcons.close,
-          size: 40,
           onPressed: _isCancelling ? null : _handleCancel,
           tooltip: '取消',
         ),
       ),
       body: Column(
         children: [
-          // Scrollable form content
+          // Scrollable form content + 加密进行中的玻璃进度浮层（不拦截点击）
           Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.only(
-                left: tokens.spaceMd,
-                right: tokens.spaceMd,
-                top: tokens.spaceMd,
-                bottom: tokens.spaceMd,
-              ),
-              child: _buildMobileFormContent(),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    left: tokens.spaceMd,
+                    right: tokens.spaceMd,
+                    top: tokens.spaceMd,
+                    bottom: tokens.spaceLg,
+                  ),
+                  child: _buildMobileFormContent(),
+                ),
+                if (_isLoading)
+                  Positioned(
+                    left: tokens.spaceMd,
+                    right: tokens.spaceMd,
+                    bottom: tokens.spaceMd,
+                    child: IgnorePointer(
+                      child: PublishProgressSheet(
+                        progress: _encryptProgress,
+                        cancelling: _isCancelling,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-          // Fixed bottom action bar
+          // Fixed bottom action bar（surfaceContainer 色调底栏，56px 主 CTA）
           NeumorphicContainer(
             shape: NeumorphicShape.flat,
             borderRadius: 0,
             padding: EdgeInsets.only(
               left: tokens.spaceMd,
               right: tokens.spaceMd,
-              top: tokens.spaceSm,
-              bottom: tokens.spaceSm + (bottomInset > 0 ? tokens.spaceSm : 0),
+              top: tokens.spaceSm + tokens.spaceXs,
+              bottom: tokens.spaceSm +
+                  tokens.spaceXs +
+                  (bottomInset > 0 ? tokens.spaceSm : 0),
             ),
             child: SafeArea(
               top: false,
               child: SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: _kHeroCtaHeight,
                 child: _isLoading
                     ? Row(
                         children: [
@@ -2350,11 +2084,13 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
                                       : '加密中...',
                               style: NeumorphicButtonStyle.primary,
                               expanded: true,
+                              busy: true,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: tokens.spaceSm + tokens.spaceXs),
                           NeumorphicButton(
                             label: '取消',
+                            minimumSize: const Size(88, _kHeroCtaHeight),
                             onPressed: _isCancelling ? null : _handleCancel,
                           ),
                         ],
@@ -2559,14 +2295,14 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
       context: context,
       barrierDismissible: false,
       builder: (context) => Dialog(
-        backgroundColor: tokens.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+        backgroundColor: tokens.surfaceContainerHigh,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(_kDialogRadius)),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2579,8 +2315,9 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
                       child: Text(
                         title,
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 22,
+                          height: 28 / 22,
+                          fontWeight: FontWeight.w700,
                           color: tokens.textPrimary,
                         ),
                       ),
@@ -2641,38 +2378,11 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
       children: [
         // ===== 内容来源选择（仅从编辑器进入时显示） =====
         if (!_isContentSourceLocked) ...[
-          Text(
-            l10n.contentSourceLabel,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: tokens.textPrimary,
-            ),
-          ),
-          SizedBox(height: tokens.spaceXs),
-          SegmentedButton<ContentSourceMode>(
-            segments: [
-              ButtonSegment<ContentSourceMode>(
-                value: ContentSourceMode.editor,
-                label: Text(l10n.editorContentLabel),
-                icon: NeumorphicIcon(
-                  StrawIcons.editNote,
-                  size: 18,
-                  color: tokens.textSecondary,
-                ),
-              ),
-              ButtonSegment<ContentSourceMode>(
-                value: ContentSourceMode.fileUpload,
-                label: Text(l10n.fileUploadLabel),
-                icon: NeumorphicIcon(
-                  StrawIcons.uploadFile,
-                  size: 18,
-                  color: tokens.textSecondary,
-                ),
-              ),
-            ],
-            selected: {_contentSourceMode},
-            onSelectionChanged: (selection) {
-              final mode = selection.first;
+          _sectionLabel(tokens, l10n.contentSourceLabel),
+          _contentSourceGroup(
+            l10n: l10n,
+            selected: _contentSourceMode,
+            onSelected: (mode) {
               setState(() {
                 _contentSourceMode = mode;
                 if (mode == ContentSourceMode.editor) {
@@ -2694,228 +2404,74 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
 
         // 文件选择区域（仅文件上传模式显示）
         if (_contentSourceMode == ContentSourceMode.fileUpload) ...[
-          SizedBox(height: tokens.spaceSm),
+          SizedBox(height: tokens.spaceSm + tokens.spaceXs),
           _buildMobileFilePickerArea(pickedFile),
         ],
 
         SizedBox(height: tokens.spaceMd),
         Divider(height: 1, color: tokens.divider),
-        SizedBox(height: tokens.spaceSm),
+        SizedBox(height: tokens.spaceMd),
 
         MetaForm(key: _metaFormKey, onChanged: () {}),
         SizedBox(height: tokens.spaceMd),
         Divider(height: 1, color: tokens.divider),
-        SizedBox(height: tokens.spaceSm),
+        SizedBox(height: tokens.spaceMd),
 
-        // Encryption mode selection
-        Text(
-          l10n.encryptionModeLabel,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: tokens.textPrimary,
-          ),
-        ),
-        RadioListTile<String>(
-          title: Text(
-            l10n.randomKeyMode,
-            style: TextStyle(color: tokens.textPrimary),
-          ),
-          subtitle: Text(
-            l10n.randomKeyModeDesc,
-            style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-          ),
-          value: 'random',
-          groupValue: _encryptionMode,
-          onChanged: (value) =>
-              setState(() => _encryptionMode = value ?? 'random'),
-          contentPadding: EdgeInsets.zero,
-          controlAffinity: ListTileControlAffinity.leading,
-          visualDensity: VisualDensity.compact,
-          activeColor: tokens.inkPrimary,
-        ),
-        RadioListTile<String>(
-          title: Text(
-            l10n.negotiatedKeyMode,
-            style: TextStyle(color: tokens.textPrimary),
-          ),
-          subtitle: Text(
-            l10n.negotiatedKeyModeDesc,
-            style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-          ),
-          value: 'negotiated',
-          groupValue: _encryptionMode,
-          onChanged: (value) =>
-              setState(() => _encryptionMode = value ?? 'random'),
-          contentPadding: EdgeInsets.zero,
-          controlAffinity: ListTileControlAffinity.leading,
-          visualDensity: VisualDensity.compact,
-          activeColor: tokens.inkPrimary,
+        // Encryption mode selection（连接按钮组）
+        _sectionLabel(tokens, l10n.encryptionModeLabel),
+        _encryptionModeGroup(
+          l10n: l10n,
+          selected: _encryptionMode,
+          onSelected: (value) => setState(() => _encryptionMode = value),
         ),
 
         if (_encryptionMode == 'negotiated') ...[
-          SizedBox(height: tokens.spaceSm),
+          SizedBox(height: tokens.spaceMd),
           PassphraseInput(key: _passphraseInputKey),
-          SizedBox(height: tokens.spaceSm),
-          Divider(height: 1, color: tokens.divider),
-        ] else ...[
-          SizedBox(height: tokens.spaceSm),
-          Divider(height: 1, color: tokens.divider),
         ],
+        SizedBox(height: tokens.spaceMd),
+        Divider(height: 1, color: tokens.divider),
+        SizedBox(height: tokens.spaceMd),
 
-        SizedBox(height: tokens.spaceSm),
         // Export format selection
         // 文件上传模式下只能选择 .straw
         if (!kIsWeb && _contentSourceMode == ContentSourceMode.editor) ...[
-          Text(
-            '导出格式：',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: tokens.textPrimary,
-            ),
-          ),
-          RadioListTile<String>(
-            title: Text(
-              '.straw 文件',
-              style: TextStyle(color: tokens.textPrimary),
-            ),
-            subtitle: Text(
-              '标准加密知识卡片文件，适合桌面端',
-              style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-            ),
-            value: 'straw',
-            groupValue: _exportFormat,
-            onChanged: (value) =>
-                setState(() => _exportFormat = value ?? 'straw'),
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            visualDensity: VisualDensity.compact,
-            activeColor: tokens.inkPrimary,
-          ),
-          RadioListTile<String>(
-            title: Text(
-              '.png 图片',
-              style: TextStyle(color: tokens.textPrimary),
-            ),
-            subtitle: Text(
-              '封面图内嵌加密数据，适合移动端分享',
-              style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-            ),
-            value: 'png',
-            groupValue: _exportFormat,
-            onChanged: (value) =>
-                setState(() => _exportFormat = value ?? 'straw'),
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            visualDensity: VisualDensity.compact,
-            activeColor: tokens.inkPrimary,
+          _sectionLabel(tokens, '导出格式：'),
+          _exportFormatGroup(
+            selected: _exportFormat,
+            onSelected: (value) => setState(() => _exportFormat = value),
           ),
         ],
 
         // 文件上传模式下显示固定格式提示
         if (!kIsWeb && _contentSourceMode == ContentSourceMode.fileUpload) ...[
-          Text(
-            '导出格式：',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: tokens.textPrimary,
-            ),
-          ),
-          ListTile(
-            leading: NeumorphicIcon(
-              StrawIcons.document,
-              size: 20,
-              color: tokens.textSecondary,
-            ),
-            title: Text(
-              '.straw 文件',
-              style: TextStyle(color: tokens.textPrimary),
-            ),
-            subtitle: Text(
-              '文件加密模式仅支持 .straw 格式',
-              style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-            ),
-            contentPadding: EdgeInsets.zero,
-            dense: true,
-          ),
+          _sectionLabel(tokens, '导出格式：'),
+          _fixedFormatNotice(tokens),
         ],
 
         if (_effectiveExportFormat == 'png') ...[
-          SizedBox(height: tokens.spaceSm),
-          Divider(height: 1, color: tokens.divider),
-          SizedBox(height: tokens.spaceXs),
-          Text(
-            '封面图片：',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: tokens.textPrimary,
-            ),
-          ),
-          SizedBox(height: tokens.spaceXs),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ChoiceChip(
-                label: const Text('使用元信息生成'),
-                selected: _customCoverBytes == null,
-                onSelected: (_) => setState(() => _customCoverBytes = null),
-                backgroundColor: tokens.surface,
-                side: BorderSide(color: tokens.surfaceAlt),
-                labelStyle: TextStyle(color: tokens.textPrimary),
-                selectedColor: tokens.inkWash,
-              ),
-              SizedBox(height: tokens.spaceSm),
-              ChoiceChip(
-                label: const Text('上传自定义图片'),
-                selected: _customCoverBytes != null,
-                onSelected: (_) => _pickMobileCoverImage(),
-                backgroundColor: tokens.surface,
-                side: BorderSide(color: tokens.surfaceAlt),
-                labelStyle: TextStyle(color: tokens.textPrimary),
-                selectedColor: tokens.inkWash,
-              ),
-            ],
+          SizedBox(height: tokens.spaceMd),
+          _sectionLabel(tokens, '封面图片：'),
+          _coverChoiceChips(
+            tokens: tokens,
+            hasCustomCover: _customCoverBytes != null,
+            onUseMetaSelected: (_) => setState(() => _customCoverBytes = null),
+            onCustomSelected: (_) => _pickMobileCoverImage(),
           ),
           if (_customCoverBytes != null) ...[
             SizedBox(height: tokens.spaceSm),
-            NeumorphicContainer(
-              shape: NeumorphicShape.flat,
-              borderRadius: tokens.radiusSmall,
-              padding: EdgeInsets.zero,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(tokens.radiusSmall),
-                child: SizedBox(
-                  height: 120,
-                  width: double.infinity,
-                  child: Image.memory(
-                    _customCoverBytes!,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-            ),
+            _coverPreview(tokens, _customCoverBytes!),
           ],
         ],
-        SizedBox(height: tokens.spaceMd),
-        Divider(height: 1, color: tokens.divider),
         // Export key file option (only in random key mode)
-        if (_encryptionMode == 'random')
-          CheckboxListTile(
-            title: Text(
-              '导出 .key 文件',
-              style: TextStyle(color: tokens.textPrimary),
-            ),
-            subtitle: Text(
-              '密钥文件可单独保存和传输，建议与 .straw 文件分开保管',
-              style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-            ),
-            value: _exportKeyFile,
-            onChanged: (value) =>
-                setState(() => _exportKeyFile = value ?? false),
-            controlAffinity: ListTileControlAffinity.leading,
-            contentPadding: EdgeInsets.zero,
-            activeColor: tokens.inkPrimary,
-            checkColor: tokens.surface,
+        if (_encryptionMode == 'random') ...[
+          SizedBox(height: tokens.spaceMd),
+          _exportKeyFileChip(
+            tokens: tokens,
+            selected: _exportKeyFile,
+            onSelected: (value) => setState(() => _exportKeyFile = value),
           ),
+        ],
       ],
     );
   }
@@ -2927,132 +2483,29 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
     if (pickedFile != null) {
       final warning = _getFileSizeWarning(pickedFile.fileSize);
 
-      return NeumorphicContainer(
-        shape: NeumorphicShape.flat,
-        borderRadius: tokens.radiusSmall,
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                NeumorphicIcon(
-                  StrawIcons.document,
-                  size: 20,
-                  color: tokens.inkPrimary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    pickedFile.fileName,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: tokens.textPrimary,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                NeumorphicIconButton(
-                  icon: StrawIcons.close,
-                  size: 32,
-                  iconSize: 16,
-                  onPressed: () {
-                    ref.read(pickedFileProvider.notifier).clear();
-                    _metaFormKey.currentState?.updateTitle('');
-                  },
-                  tooltip: '移除文件',
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '大小：${_formatFileSize(pickedFile.fileSize)}',
-              style: TextStyle(fontSize: 12, color: tokens.textSecondary),
-            ),
-            if (warning != null) ...[
-              const SizedBox(height: 6),
-              _buildMobileFileSizeWarningChip(warning),
-            ],
-          ],
-        ),
+      return _pickedFileCard(
+        tokens: tokens,
+        fileName: pickedFile.fileName,
+        sizeText: '大小：${_formatFileSize(pickedFile.fileSize)}',
+        onRemove: () {
+          ref.read(pickedFileProvider.notifier).clear();
+          _metaFormKey.currentState?.updateTitle('');
+        },
+        warning:
+            warning != null ? _buildMobileFileSizeWarningChip(warning) : null,
       );
     }
 
-    return InkWell(
+    return _PublishDropZone(
+      icon: StrawIcons.cloudUpload,
+      title: '点击选择文件',
       onTap: _pickFile,
-      borderRadius: BorderRadius.circular(tokens.radiusSmall),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(tokens.radiusSmall),
-          border: Border.all(
-            color: tokens.divider,
-          ),
-        ),
-        child: NeumorphicContainer(
-          shape: NeumorphicShape.flat,
-          borderRadius: tokens.radiusSmall,
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-          child: Column(
-            children: [
-              NeumorphicIcon(
-                StrawIcons.cloudUpload,
-                size: 36,
-                color: tokens.textSecondary,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '点击选择文件',
-                style: TextStyle(fontSize: 14, color: tokens.textSecondary),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '支持任意类型文件',
-                style: TextStyle(fontSize: 12, color: tokens.textHint),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
   /// 构建移动端文件大小警告提示芯片
   Widget _buildMobileFileSizeWarningChip(_FileSizeWarning warning) {
-    final tokens = NeumorphicTokens.ofContext(context);
-    final colors = {
-      _FileSizeWarningLevel.hint: tokens.inkSecondary,
-      _FileSizeWarningLevel.warning: tokens.warning,
-      _FileSizeWarningLevel.strongWarning: tokens.warning,
-      _FileSizeWarningLevel.severe: tokens.error,
-    };
-    final icons = {
-      _FileSizeWarningLevel.hint: StrawIcons.info,
-      _FileSizeWarningLevel.warning: StrawIcons.warning,
-      _FileSizeWarningLevel.strongWarning: StrawIcons.error,
-      _FileSizeWarningLevel.severe: StrawIcons.error,
-    };
-
-    final color = colors[warning.level]!;
-    final icon = icons[warning.level]!;
-
-    return NeumorphicContainer(
-      shape: NeumorphicShape.flat,
-      borderRadius: tokens.radiusSmall,
-      color: color.withValues(alpha: 0.08),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(
-        children: [
-          NeumorphicIcon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              warning.message,
-              style: TextStyle(fontSize: 11, color: color),
-            ),
-          ),
-        ],
-      ),
-    );
+    return _fileSizeWarningChip(NeumorphicTokens.ofContext(context), warning);
   }
 
   Future<void> _handleMobilePublish() async {
@@ -3100,14 +2553,14 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
         final shouldProceed = await showDialog<bool>(
           context: context,
           builder: (context) => Dialog(
-            backgroundColor: tokens.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+            backgroundColor: tokens.surfaceContainerHigh,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(_kDialogRadius)),
             ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3124,8 +2577,9 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
                           child: Text(
                             '内容过大提示',
                             style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 22,
+                              height: 28 / 22,
+                              fontWeight: FontWeight.w700,
                               color: tokens.textPrimary,
                             ),
                           ),
@@ -3525,14 +2979,14 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
       context: context,
       barrierDismissible: false,
       builder: (context) => Dialog(
-        backgroundColor: tokens.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+        backgroundColor: tokens.surfaceContainerHigh,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(_kDialogRadius)),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3549,8 +3003,9 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
                       child: Text(
                         l10n.weakPassphraseTitle,
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 22,
+                          height: 28 / 22,
+                          fontWeight: FontWeight.w700,
                           color: tokens.textPrimary,
                         ),
                       ),
@@ -3592,7 +3047,7 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
                       child: Text(
                         l10n.passphraseWeakSuggestion,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           color: tokens.inkSecondary,
                         ),
                       ),
@@ -3603,7 +3058,7 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
                 Text(
                   l10n.passphraseWeakConfirm,
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     fontSize: 14,
                     color: tokens.textPrimary,
                   ),
@@ -3646,14 +3101,14 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
       context: context,
       barrierDismissible: false,
       builder: (context) => Dialog(
-        backgroundColor: tokens.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+        backgroundColor: tokens.surfaceContainerHigh,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(_kDialogRadius)),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3670,8 +3125,9 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
                       child: Text(
                         l10n.pngOriginalImageConfirmTitle,
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 22,
+                          height: 28 / 22,
+                          fontWeight: FontWeight.w700,
                           color: tokens.textPrimary,
                         ),
                       ),
@@ -3692,7 +3148,7 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
                       child: Text(
                         l10n.pngOriginalImageConfirmBody,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           color: tokens.warning,
                         ),
                       ),
@@ -3731,14 +3187,14 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
     return showDialog<bool>(
       context: context,
       builder: (context) => Dialog(
-        backgroundColor: tokens.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.radiusXLarge),
+        backgroundColor: tokens.surfaceContainerHigh,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(_kDialogRadius)),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3755,8 +3211,9 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
                       child: Text(
                         l10n.saveAfterPublish,
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 22,
+                          height: 28 / 22,
+                          fontWeight: FontWeight.w700,
                           color: tokens.textPrimary,
                         ),
                       ),
@@ -3910,13 +3367,13 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
             NeumorphicIcon(
               StrawIcons.error,
               size: 20,
-              color: tokens.surface,
+              color: tokens.errorContainer,
             ),
             const SizedBox(width: 8),
             Flexible(child: Text(message)),
           ],
         ),
-        backgroundColor: tokens.error,
+        backgroundColor: tokens.inverseSurface,
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
       ),
@@ -3934,13 +3391,13 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
             NeumorphicIcon(
               StrawIcons.check,
               size: 20,
-              color: tokens.surface,
+              color: tokens.inversePrimary,
             ),
             const SizedBox(width: 8),
             Flexible(child: Text(message)),
           ],
         ),
-        backgroundColor: tokens.success,
+        backgroundColor: tokens.inverseSurface,
         duration: const Duration(seconds: 5),
         behavior: SnackBarBehavior.floating,
       ),
@@ -3958,8 +3415,9 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
         title: Text(
           l10n.publishSuccessTitle,
           style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontSize: 22,
+            height: 28 / 22,
+            fontWeight: FontWeight.w700,
             color: tokens.textPrimary,
           ),
         ),
@@ -3971,39 +3429,14 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
             child: SingleChildScrollView(
               padding: EdgeInsets.all(tokens.spaceMd),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      NeumorphicIcon(
-                        StrawIcons.check,
-                        size: 22,
-                        color: tokens.success,
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          l10n.publishSuccessMessage,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: tokens.textPrimary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: tokens.spaceMd),
-                  Text(
-                    l10n.filePathLabel,
-                    style: TextStyle(
-                      color: tokens.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                  Text(
-                    _savedFilePath ?? l10n.unknownValue,
-                    style: TextStyle(fontSize: 12, color: tokens.textHint),
+                  // 成功提示 + 文件路径信息
+                  _publishSuccessSummary(
+                    tokens: tokens,
+                    l10n: l10n,
+                    savedFilePath: _savedFilePath,
+                    showIcon: true,
                   ),
                   SizedBox(height: tokens.spaceMd),
                   PublishSecurityNotices(
@@ -4015,21 +3448,21 @@ class _PublishDialogMobileState extends ConsumerState<_PublishDialogMobile> {
               ),
             ),
           ),
-          // Bottom action button
+          // Bottom action button（56px 填充药丸）
           NeumorphicContainer(
             shape: NeumorphicShape.flat,
             borderRadius: 0,
             padding: EdgeInsets.only(
               left: tokens.spaceMd,
               right: tokens.spaceMd,
-              top: tokens.spaceSm,
-              bottom: tokens.spaceSm + bottomInset,
+              top: tokens.spaceSm + tokens.spaceXs,
+              bottom: tokens.spaceSm + tokens.spaceXs + bottomInset,
             ),
             child: SafeArea(
               top: false,
               child: SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: _kHeroCtaHeight,
                 child: NeumorphicButton(
                   label: l10n.done,
                   style: NeumorphicButtonStyle.primary,
@@ -4070,4 +3503,601 @@ class _FileSizeWarning {
 
   final _FileSizeWarningLevel level;
   final String message;
+}
+
+// ============================================================================
+// 共享展示组件（桌面 Dialog 与 Android 全屏页共用，仅负责外观）
+// ============================================================================
+
+/// 对话框圆角（M3 Expressive：对话框四角 32）
+const double _kDialogRadius = 32;
+
+/// 主 CTA 高度（"生成并加密" / "完成"：56px 填充药丸）
+const double _kHeroCtaHeight = 56;
+
+/// 分区标题（label 14/20 w700）
+Widget _sectionLabel(NeumorphicTokens tokens, String text) {
+  return Padding(
+    padding: EdgeInsets.only(bottom: tokens.spaceSm),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 14,
+        height: 20 / 14,
+        fontWeight: FontWeight.w700,
+        color: tokens.textPrimary,
+      ),
+    ),
+  );
+}
+
+/// 圆形色调徽标（标题图标、成功标记、文件图标等）
+Widget _toneBadge({
+  required String icon,
+  required Color background,
+  required Color foreground,
+  double size = 48,
+  double iconSize = 24,
+}) {
+  return Container(
+    width: size,
+    height: size,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+    child: NeumorphicIcon(icon, size: iconSize, color: foreground),
+  );
+}
+
+/// 内容来源选择：连接按钮组（编辑器内容 / 上传文件）
+Widget _contentSourceGroup({
+  required AppLocalizations l10n,
+  required ContentSourceMode selected,
+  required ValueChanged<ContentSourceMode> onSelected,
+}) {
+  return PublishConnectedButtonGroup<ContentSourceMode>(
+    segments: [
+      PublishChoiceSegment<ContentSourceMode>(
+        value: ContentSourceMode.editor,
+        label: l10n.editorContentLabel,
+        icon: StrawIcons.editNote,
+      ),
+      PublishChoiceSegment<ContentSourceMode>(
+        value: ContentSourceMode.fileUpload,
+        label: l10n.fileUploadLabel,
+        icon: StrawIcons.uploadFile,
+      ),
+    ],
+    selected: selected,
+    onSelected: onSelected,
+  );
+}
+
+/// 加密模式选择：连接按钮组（随机密钥 / 协商密钥，含说明）
+Widget _encryptionModeGroup({
+  required AppLocalizations l10n,
+  required String selected,
+  required ValueChanged<String> onSelected,
+}) {
+  return PublishConnectedButtonGroup<String>(
+    segments: [
+      PublishChoiceSegment<String>(
+        value: 'random',
+        label: l10n.randomKeyMode,
+        description: l10n.randomKeyModeDesc,
+        icon: StrawIcons.password,
+      ),
+      PublishChoiceSegment<String>(
+        value: 'negotiated',
+        label: l10n.negotiatedKeyMode,
+        description: l10n.negotiatedKeyModeDesc,
+        icon: StrawIcons.lock,
+      ),
+    ],
+    selected: selected,
+    onSelected: onSelected,
+  );
+}
+
+/// 导出格式选择：连接按钮组（.straw / .png，含说明）
+Widget _exportFormatGroup({
+  required String selected,
+  required ValueChanged<String> onSelected,
+}) {
+  return PublishConnectedButtonGroup<String>(
+    segments: const [
+      PublishChoiceSegment<String>(
+        value: 'straw',
+        label: '.straw 文件',
+        description: '标准加密知识卡片文件，适合桌面端',
+        icon: StrawIcons.document,
+      ),
+      PublishChoiceSegment<String>(
+        value: 'png',
+        label: '.png 图片',
+        description: '封面图内嵌加密数据，适合移动端分享',
+        icon: StrawIcons.image,
+      ),
+    ],
+    selected: selected,
+    onSelected: onSelected,
+  );
+}
+
+/// 文件加密模式下的固定导出格式提示（色调块）
+Widget _fixedFormatNotice(NeumorphicTokens tokens) {
+  return NeumorphicContainer(
+    shape: NeumorphicShape.flat,
+    color: tokens.surfaceAlt,
+    borderRadius: tokens.radiusMedium,
+    padding: EdgeInsets.symmetric(horizontal: tokens.spaceMd),
+    child: ListTile(
+      leading: NeumorphicIcon(
+        StrawIcons.document,
+        size: 20,
+        color: tokens.inkPrimary,
+      ),
+      title: Text(
+        '.straw 文件',
+        style: TextStyle(
+          fontSize: 14,
+          height: 20 / 14,
+          fontWeight: FontWeight.w700,
+          color: tokens.textPrimary,
+        ),
+      ),
+      subtitle: Text(
+        '文件加密模式仅支持 .straw 格式',
+        style: TextStyle(fontSize: 12, color: tokens.textSecondary),
+      ),
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+    ),
+  );
+}
+
+/// 让芯片外层 Material 的画布色透明
+///
+/// RawChip 外层 Material 未指定颜色时会取 [ThemeData.canvasColor]（surface），
+/// 在 surfaceContainerHigh 对话框上会显出一块浅色底；此处将画布色置为透明，
+/// 使未选中芯片真正只有 outline 描边。
+class _TransparentChipCanvas extends StatelessWidget {
+  const _TransparentChipCanvas({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(canvasColor: Colors.transparent),
+      child: child,
+    );
+  }
+}
+
+/// 芯片底色：选中 secondaryContainer，未选中透明（仅 outline 描边），禁用 onSurface 12%
+WidgetStateProperty<Color?> _chipColor(NeumorphicTokens tokens) {
+  return WidgetStateProperty.resolveWith((states) {
+    if (states.contains(WidgetState.disabled)) {
+      return tokens.textPrimary.withValues(alpha: 0.12);
+    }
+    if (states.contains(WidgetState.selected)) {
+      return tokens.secondaryContainer;
+    }
+    return Colors.transparent;
+  });
+}
+
+/// M3 Expressive 芯片：圆角 10，未选中为 outline 描边，选中为 secondaryContainer
+Widget _strawChoiceChip({
+  required NeumorphicTokens tokens,
+  required String label,
+  required bool selected,
+  required ValueChanged<bool> onSelected,
+}) {
+  return ChoiceChip(
+    label: Text(label),
+    selected: selected,
+    onSelected: onSelected,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    side: BorderSide(
+      color: selected ? Colors.transparent : tokens.outline,
+    ),
+    color: _chipColor(tokens),
+    checkmarkColor: tokens.onSecondaryContainer,
+    labelStyle: TextStyle(
+      fontSize: 14,
+      height: 20 / 14,
+      fontWeight: FontWeight.w700,
+      color: selected ? tokens.onSecondaryContainer : tokens.textSecondary,
+    ),
+  );
+}
+
+/// 封面图片选择芯片（使用元信息生成 / 上传自定义图片）
+Widget _coverChoiceChips({
+  required NeumorphicTokens tokens,
+  required bool hasCustomCover,
+  required ValueChanged<bool> onUseMetaSelected,
+  required ValueChanged<bool> onCustomSelected,
+}) {
+  return _TransparentChipCanvas(
+    child: Wrap(
+      spacing: tokens.spaceSm,
+      runSpacing: tokens.spaceXs,
+      children: [
+        _strawChoiceChip(
+          tokens: tokens,
+          label: '使用元信息生成',
+          selected: !hasCustomCover,
+          onSelected: onUseMetaSelected,
+        ),
+        _strawChoiceChip(
+          tokens: tokens,
+          label: '上传自定义图片',
+          selected: hasCustomCover,
+          onSelected: onCustomSelected,
+        ),
+      ],
+    ),
+  );
+}
+
+/// 自定义封面预览（圆角 16）
+Widget _coverPreview(NeumorphicTokens tokens, Uint8List bytes) {
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(tokens.radiusMedium),
+    child: SizedBox(
+      height: 120,
+      width: double.infinity,
+      child: Image.memory(bytes, fit: BoxFit.cover),
+    ),
+  );
+}
+
+/// 导出 .key 文件选项：筛选芯片 + 说明文字
+///
+/// 与原 CheckboxListTile 保持一致的交互与语义：芯片与说明合并为一个
+/// 复选框语义节点（说明并入朗读标签），点击说明文字同样切换选项。
+Widget _exportKeyFileChip({
+  required NeumorphicTokens tokens,
+  required bool selected,
+  required ValueChanged<bool> onSelected,
+}) {
+  return MergeSemantics(
+    child: Semantics(
+      checked: selected,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _TransparentChipCanvas(
+            child: FilterChip(
+              label: const Text('导出 .key 文件'),
+              selected: selected,
+              onSelected: onSelected,
+              shape:
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              side: BorderSide(
+                color: selected ? Colors.transparent : tokens.outline,
+              ),
+              color: _chipColor(tokens),
+              checkmarkColor: tokens.onSecondaryContainer,
+              labelStyle: TextStyle(
+                fontSize: 14,
+                height: 20 / 14,
+                fontWeight: FontWeight.w700,
+                color:
+                    selected ? tokens.onSecondaryContainer : tokens.textSecondary,
+              ),
+            ),
+          ),
+          SizedBox(height: tokens.spaceXs),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            excludeFromSemantics: true,
+            onTap: () => onSelected(!selected),
+            child: Text(
+              '密钥文件可单独保存和传输，建议与 .straw 文件分开保管',
+              style: TextStyle(
+                fontSize: 12,
+                height: 16 / 12,
+                color: tokens.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// 已选文件卡片（surfaceContainerHighest 色调卡，圆角 28）
+Widget _pickedFileCard({
+  required NeumorphicTokens tokens,
+  required String fileName,
+  required String sizeText,
+  required VoidCallback onRemove,
+  Widget? warning,
+}) {
+  return NeumorphicContainer.large(
+    shape: NeumorphicShape.concave,
+    padding: EdgeInsets.only(
+      left: tokens.spaceMd,
+      right: tokens.spaceXs,
+      top: tokens.spaceSm,
+      bottom: warning == null ? tokens.spaceSm : tokens.spaceMd,
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _toneBadge(
+              icon: StrawIcons.document,
+              background: tokens.inkWash,
+              foreground: tokens.onPrimaryContainer,
+              size: 40,
+              iconSize: 20,
+            ),
+            SizedBox(width: tokens.spaceSm + tokens.spaceXs),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    fileName,
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 20 / 14,
+                      fontWeight: FontWeight.w700,
+                      color: tokens.textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    sizeText,
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 16 / 12,
+                      color: tokens.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            NeumorphicIconButton(
+              icon: StrawIcons.close,
+              iconSize: 18,
+              onPressed: onRemove,
+              tooltip: '移除文件',
+            ),
+          ],
+        ),
+        if (warning != null) ...[
+          SizedBox(height: tokens.spaceSm),
+          Padding(
+            padding: EdgeInsets.only(right: tokens.spaceSm + tokens.spaceXs),
+            child: warning,
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+/// 文件大小警告芯片（hint=secondaryContainer，warning=警示色调，severe=errorContainer）
+Widget _fileSizeWarningChip(
+  NeumorphicTokens tokens,
+  _FileSizeWarning warning,
+) {
+  final warningTone = Color.alphaBlend(
+    tokens.warning.withValues(alpha: 0.14),
+    tokens.surfaceAlt,
+  );
+  final (background, foreground) = switch (warning.level) {
+    _FileSizeWarningLevel.hint => (
+        tokens.secondaryContainer,
+        tokens.onSecondaryContainer,
+      ),
+    _FileSizeWarningLevel.warning || _FileSizeWarningLevel.strongWarning => (
+        warningTone,
+        tokens.warning
+      ),
+    _FileSizeWarningLevel.severe => (
+        tokens.errorContainer,
+        tokens.onErrorContainer,
+      ),
+  };
+  final icon = switch (warning.level) {
+    _FileSizeWarningLevel.hint => StrawIcons.info,
+    _FileSizeWarningLevel.warning => StrawIcons.warning,
+    _FileSizeWarningLevel.strongWarning => StrawIcons.error,
+    _FileSizeWarningLevel.severe => StrawIcons.error,
+  };
+
+  return NeumorphicContainer(
+    shape: NeumorphicShape.flat,
+    borderRadius: 10,
+    color: background,
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    child: Row(
+      children: [
+        NeumorphicIcon(icon, size: 16, color: foreground),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            warning.message,
+            style: TextStyle(fontSize: 12, height: 16 / 12, color: foreground),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// 文件选择 / 拖放区（圆角 28 色调面板；[highlighted] 时 primaryContainer + 2px primary 描边）
+class _PublishDropZone extends StatelessWidget {
+  const _PublishDropZone({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.highlighted = false,
+  });
+
+  final String icon;
+  final String title;
+  final VoidCallback onTap;
+  final bool highlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = NeumorphicTokens.ofContext(context);
+
+    return Material(
+      color: highlighted ? tokens.inkWash : tokens.surfaceContainerLow,
+      animationDuration: StrawMotion.duration(context, StrawMotion.short),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(tokens.radiusLarge),
+        side: BorderSide(
+          color: highlighted ? tokens.inkPrimary : tokens.divider,
+          width: highlighted ? 2 : 1,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            vertical: tokens.spaceLg,
+            horizontal: tokens.spaceMd,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedScale(
+                scale: highlighted ? 1.08 : 1,
+                duration: StrawMotion.duration(context, StrawMotion.medium),
+                curve: StrawMotion.spring,
+                child: _toneBadge(
+                  icon: icon,
+                  background: highlighted
+                      ? tokens.inkPrimary
+                      : tokens.secondaryContainer,
+                  foreground: highlighted
+                      ? tokens.onPrimary
+                      : tokens.onSecondaryContainer,
+                  size: 56,
+                  iconSize: 28,
+                ),
+              ),
+              SizedBox(height: tokens.spaceSm + tokens.spaceXs),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 20 / 14,
+                  fontWeight: FontWeight.w700,
+                  color: highlighted
+                      ? tokens.onPrimaryContainer
+                      : tokens.textPrimary,
+                ),
+              ),
+              SizedBox(height: tokens.spaceXs),
+              Text(
+                '支持任意类型文件',
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 16 / 12,
+                  color: highlighted
+                      ? tokens.onPrimaryContainer
+                      : tokens.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 发布成功摘要：tertiaryContainer 成功卡 + 文件路径块
+Widget _publishSuccessSummary({
+  required NeumorphicTokens tokens,
+  required AppLocalizations l10n,
+  required String? savedFilePath,
+  bool showIcon = false,
+}) {
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      NeumorphicContainer.large(
+        shape: NeumorphicShape.flat,
+        color: tokens.tertiaryContainer,
+        padding: EdgeInsets.all(tokens.spaceMd),
+        child: Row(
+          children: [
+            if (showIcon) ...[
+              _toneBadge(
+                icon: StrawIcons.check,
+                background: tokens.success,
+                foreground: tokens.onTertiary,
+                size: 40,
+                iconSize: 22,
+              ),
+              SizedBox(width: tokens.spaceSm + tokens.spaceXs),
+            ],
+            Flexible(
+              child: Text(
+                l10n.publishSuccessMessage,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  height: 24 / 16,
+                  color: tokens.onTertiaryContainer,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      SizedBox(height: tokens.spaceSm + tokens.spaceXs),
+      NeumorphicContainer(
+        shape: NeumorphicShape.flat,
+        color: tokens.surfaceAlt,
+        borderRadius: tokens.radiusMedium,
+        padding: EdgeInsets.symmetric(
+          horizontal: tokens.spaceMd,
+          vertical: tokens.spaceSm + tokens.spaceXs,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.filePathLabel,
+              style: TextStyle(
+                color: tokens.textSecondary,
+                fontSize: 12,
+                height: 16 / 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              savedFilePath ?? l10n.unknownValue,
+              style: TextStyle(
+                fontSize: 14,
+                height: 20 / 14,
+                color: tokens.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
